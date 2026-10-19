@@ -8,6 +8,8 @@ import * as repaso from "./repaso.js";
 import { planificar, PASOS, TOTAL, silabasParaTonos } from "./sesion.js";
 import { colorear, escapar, tonoDe, esUnaSilaba } from "./pinyin.js";
 import { descargarRecordatorio } from "./recordatorio.js";
+import * as grabadora from "./grabadora.js";
+import * as reconocer from "./reconocer.js";
 
 let datos, estado;
 let ses = null;
@@ -24,6 +26,7 @@ export async function arrancar() {
   estado = almacen.cargar();
   voz.preparar(estado.ajustes.voz);
   datos = await cargarDatos();
+  reconocer.prepararDiccionario(datos);
   for (const b of pestanas().querySelectorAll("[data-ir]")) b.onclick = () => ir(b.dataset.ir);
   ir("hoy");
 }
@@ -218,6 +221,10 @@ PANTALLAS.ajustes = function () {
     <div class="tarjeta">
       <div class="fila"><span>Velocidad lenta</span><span><input type="range" id="lenta" min="30" max="90" value="${Math.round(estado.ajustes.lenta * 100)}"> <b id="lentaTxt">${estado.ajustes.lenta.toFixed(2)}</b></span></div>
       <div class="fila"><span>Mostrar caracteres</span><button id="hanzi">${estado.ajustes.mostrarHanzi ? "Sí" : "No"}</button></div>
+      <div class="fila"><span>Micrófono</span><span class="suave">${grabadora.soportado() ? (micro.pedido ? "activado" : "se pide al usarlo") : "no disponible aquí"}</span></div>
+      <div class="fila"><span>Decirme qué ha entendido</span>${reconocer.soportado()
+        ? `<button id="reco">${estado.ajustes.reconocer ? "Sí" : "No"}</button>`
+        : '<span class="suave">no disponible aquí</span>'}</div>
       <div class="fila"><span>Hora del recordatorio</span><input type="time" id="hora" value="${estado.ajustes.hora}" style="width:auto"></div>
       <div class="fila"><span>Avisarme todos los días</span><button id="recordatorio">Añadir al Calendario</button></div>
       <div class="mini" style="padding-bottom:8px">Se descarga un archivo del calendario. En el iPhone, tócalo y dale a "Añadir". Si no se abre, abre la app en Safari y vuelve a tocar el botón.</div>
@@ -243,6 +250,8 @@ PANTALLAS.ajustes = function () {
   r.oninput = () => { estado.ajustes.lenta = Number(r.value) / 100; $("#lentaTxt").textContent = estado.ajustes.lenta.toFixed(2); };
   r.onchange = () => { almacen.guardar(estado); voz.decir("慢一點", { lenta: true, ...opcionesVoz() }); };
   $("#hanzi").onclick = () => { estado.ajustes.mostrarHanzi = !estado.ajustes.mostrarHanzi; almacen.guardar(estado); PANTALLAS.ajustes(); };
+  const reco = $("#reco");
+  if (reco) reco.onclick = () => { estado.ajustes.reconocer = !estado.ajustes.reconocer; almacen.guardar(estado); PANTALLAS.ajustes(); };
   $("#hora").onchange = (e) => { estado.ajustes.hora = e.target.value; almacen.guardar(estado); };
   $("#recordatorio").onclick = () => descargarRecordatorio(estado.ajustes.hora);
   $("#exportar").onclick = () => almacen.exportar(estado);
@@ -260,6 +269,86 @@ PANTALLAS.ajustes = function () {
     ir("hoy");
   };
 };
+
+// ------------------------------------------------- grábate y compárate
+let micro = { pedido: false, grabando: false, url: null, oido: null };
+
+function limpiarMicro() { micro.url = null; micro.oido = null; micro.grabando = false; }
+
+function htmlMicro() {
+  if (!grabadora.soportado()) {
+    return `<p class="mini centro" style="margin-top:12px">Este navegador no deja grabar. Dilo en voz alta de todos modos.</p>`;
+  }
+  if (!micro.pedido) {
+    return `<div class="tarjeta" style="margin-top:12px">
+      <div class="mini">Para grabarte y compararte hace falta el micrófono. La grabación no se guarda ni sale de este aparato.</div>
+      <button id="pedirMic">Activar el micrófono</button>
+    </div>`;
+  }
+  const oido = micro.oido;
+  return `
+    <div class="doble" style="margin-top:12px">
+      <button class="grande gris" id="grabar">${micro.grabando ? "⏹ Parar" : "🎤 Grabarme"}</button>
+      <button class="grande gris" id="comparar"${micro.url ? "" : " disabled"}>▶ Modelo y yo</button>
+    </div>
+    ${reconocer.soportado() && estado.ajustes.reconocer && !micro.grabando
+      ? '<button id="entendido" style="margin-top:4px">¿Me has entendido?</button>' : ""}
+    ${oido ? `<div class="tarjeta ${oido.nivel === "bien" ? "bien-aviso" : oido.nivel === "mal" || oido.nivel === "nada" ? "mal-aviso" : "aviso"}" style="margin-top:8px">
+        <div class="mini">He oído</div>
+        ${oido.pinyin ? `<div class="pin peq">${colorear(oido.pinyin)}</div>` : ""}
+        ${oido.texto && estado.ajustes.mostrarHanzi ? `<div class="han">${escapar(oido.texto)}</div>` : ""}
+        <div class="mini">${escapar(oido.juicio)}</div>
+      </div>` : ""}`;
+}
+
+async function modeloYYo(textoModelo) {
+  await voz.decir(textoModelo, opcionesVoz());
+  await new Promise((r) => setTimeout(r, 250));
+  await grabadora.reproducir(micro.url);
+}
+
+function wirearMicro(textoModelo, repintar) {
+  const pedir = $("#pedirMic");
+  if (pedir) pedir.onclick = async () => {
+    micro.pedido = await grabadora.pedirPermiso();
+    if (!micro.pedido) alert("Sin permiso del micrófono no puedo grabarte. Puedes dárselo en los ajustes del navegador; el resto de la app funciona igual.");
+    repintar();
+  };
+
+  const bg = $("#grabar");
+  if (bg) bg.onclick = async () => {
+    if (micro.grabando) {
+      micro.url = await grabadora.parar();
+      micro.grabando = false;
+      repintar();
+      await modeloYYo(textoModelo);
+    } else {
+      micro.oido = null;
+      voz.callar();
+      micro.grabando = await grabadora.empezar();
+      repintar();
+    }
+  };
+
+  const bc = $("#comparar");
+  if (bc) bc.onclick = () => modeloYYo(textoModelo);
+
+  const be = $("#entendido");
+  if (be) be.onclick = async () => {
+    be.textContent = "Escuchando… di la frase";
+    voz.callar();
+    const r = await reconocer.escuchar();
+    if (r.error === "not-allowed" || r.error === "service-not-allowed") {
+      micro.oido = { texto: "", pinyin: "", juicio: "El navegador no me deja reconocer la voz aquí.", nivel: "mal" };
+    } else if (r.error || !r.texto) {
+      micro.oido = { texto: "", pinyin: "", juicio: "No he entendido nada. Prueba otra vez, más cerca.", nivel: "nada" };
+    } else {
+      const juicio = reconocer.compara(r.texto, textoModelo);
+      micro.oido = { texto: r.texto, pinyin: reconocer.aPinyin(r.texto), juicio: juicio.texto, nivel: juicio.nivel };
+    }
+    repintar();
+  };
+}
 
 // ================================================================== SESIÓN
 function empezarSesion() {
@@ -461,7 +550,8 @@ function pasoNuevas() {
         <button class="grande gris" id="normal">▶ Normal</button>
         <button class="grande gris" id="lento">🐢 Lenta</button>
       </div>
-      <p class="mini" style="margin-top:14px">Dilo en voz alta dos veces.</p>
+      <p class="mini" style="margin-top:14px">Escúchalo, dilo tú y compárate.</p>
+      ${htmlMicro()}
     </div>
     ${ej ? `<div class="tarjeta">
       <div class="mini">En la escena de hoy</div>
@@ -471,6 +561,8 @@ function pasoNuevas() {
       <button id="frase">▶ Oír la frase</button>
     </div>` : ""}
     ${pie('<button class="grande" id="seguir">Siguiente</button>')}`);
+
+  wirearMicro(it.tts, pasoNuevas);
 
   const sonar = async () => {
     ses.contadores.escuchar += 1;
@@ -487,6 +579,7 @@ function pasoNuevas() {
     almacen.guardar(estado); // por si cierras la app a mitad
     ses.contadores.hablar += 1;
     n.i += 1;
+    limpiarMicro();
     pasoNuevas();
   };
 }
@@ -567,6 +660,7 @@ function pasoDilo() {
       <p class="mini">Reto ${d.i + 1} de ${retos.length}</p>
       <p class="es" style="font-size:22px;font-weight:600;margin:10px 0">${escapar(c.es)}</p>
       <p class="suave">Dilo en voz alta en chino.</p>
+      ${htmlMicro()}
       <div id="modelo" class="${d.visto ? "" : "oculto"}" style="margin-top:16px">
         ${estado.ajustes.mostrarHanzi ? `<div class="han">${escapar(c.hanzi)}</div>` : ""}
         <div class="pin peq">${colorear(c.pinyin)}</div>
@@ -577,9 +671,10 @@ function pasoDilo() {
       ? '<button class="grande" id="seguir">Siguiente reto</button>'
       : '<button class="grande" id="ver">Ya lo he dicho · ver el modelo</button>')}`);
 
+  wirearMicro(c.hanzi, pasoDilo);
   if (d.visto) {
     $("#oir").onclick = () => voz.decir(c.hanzi, opcionesVoz());
-    $("#seguir").onclick = () => { d.i += 1; d.visto = false; ses.contadores.hablar += 1; pasoDilo(); };
+    $("#seguir").onclick = () => { d.i += 1; d.visto = false; ses.contadores.hablar += 1; limpiarMicro(); pasoDilo(); };
   } else {
     $("#ver").onclick = () => { d.visto = true; pasoDilo(); voz.decir(c.hanzi, opcionesVoz()); };
   }
@@ -601,6 +696,7 @@ function pasoReal() {
       ${miTurno
         ? `<p class="suave" style="margin-top:10px">Te toca a ti (${escapar(l.who)})</p>
            <p class="es" style="font-size:20px;font-weight:600">${escapar(l.es)}</p>
+           ${htmlMicro()}
            <div id="modelo" class="${r.esperando ? "" : "oculto"}" style="margin-top:14px">
              ${estado.ajustes.mostrarHanzi ? `<div class="han">${escapar(l.hanzi)}</div>` : ""}
              <div class="pin peq">${colorear(l.pinyin)}</div>
@@ -620,8 +716,10 @@ function pasoReal() {
     $("#oir").onclick = () => voz.decir(l.hanzi, opcionesVoz());
     $("#seguir").onclick = () => { r.i += 1; pasoReal(); };
   } else if (r.esperando) {
-    $("#seguir").onclick = () => { r.i += 1; r.esperando = false; ses.contadores.hablar += 1; pasoReal(); };
+    wirearMicro(l.hanzi, pasoReal);
+    $("#seguir").onclick = () => { r.i += 1; r.esperando = false; ses.contadores.hablar += 1; limpiarMicro(); pasoReal(); };
   } else {
+    wirearMicro(l.hanzi, pasoReal);
     $("#ver").onclick = () => { r.esperando = true; pasoReal(); voz.decir(l.hanzi, opcionesVoz()); };
   }
 }
@@ -629,6 +727,8 @@ function pasoReal() {
 // ---------------------------------------------------------- fin
 function acabarSesion() {
   terminarReloj();
+  limpiarMicro();
+  grabadora.soltar(); // suelta el micrófono al acabar
   const segundos = Math.round((Date.now() - ses.inicio) / 1000);
   const hechas = ses.plan.nuevas.slice(0, ses.nuevas.i);
   const noHechas = ses.plan.nuevas.slice(ses.nuevas.i);

@@ -18,7 +18,7 @@ export const estadoInicial = () => ({
   diasHechos: [],
   totalSegundos: 0,
   ultimaSesion: null,
-  ajustes: { lenta: 0.55, mostrarHanzi: true, hora: "08:00", voz: "" },
+  ajustes: { lenta: 0.55, mostrarHanzi: true, hora: "08:00", voz: "", reconocer: true },
 });
 
 export function cargar() {
