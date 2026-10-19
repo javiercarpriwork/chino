@@ -3,51 +3,38 @@
 Última actualización: 19 de octubre de 2026.
 
 ## Dónde estamos
-**Fases 1 y 2 terminadas.** Ya se puede hacer la sesión diaria entera, de principio a fin, con las seis partes y el repaso. Falta el micrófono (fase 3) y el diseño fino y la instalación en el iPhone (fase 4).
+**Fases 1, 2 y 4 terminadas.** La app está lista para instalarla en el iPhone: funciona sin internet, tiene icono propio y recordatorio para el Calendario. Falta que Javi la publique (fase 5, instrucciones en `PUBLICAR.md`) y el micrófono (fase 3).
 
 | Fase | Qué es | Estado |
 |---|---|---|
 | 1 | Escenas (`scenes.json`) y comprobación | **hecha** |
-| 2 | Sesión diaria y repaso, sin micrófono | **hecha** |
-| 3 | Micro, "grábate y compárate" y reconocimiento de voz | siguiente |
-| 4 | Pantallas, diseño y app instalable (icono, sin internet, recordatorio) | pendiente |
-| 5 | Publicarla en GitHub Pages y ponerla en el iPhone | pendiente |
+| 2 | Sesión diaria y repaso | **hecha** |
+| 3 | Micro, "grábate y compárate" y reconocimiento de voz | pendiente (necesita https: mejor después de publicar) |
+| 4 | Icono, sin internet, recordatorio y diseño | **hecha** |
+| 5 | Publicar en GitHub Pages e instalar en el iPhone | **le toca a Javi** (`PUBLICAR.md`) |
 
 ## Qué hay hecho
-- `scenes.json`: los 28 días completos (280 líneas de diálogo, 84 preguntas, 140 retos, 550 frases de ejemplo).
-- `tools/validar.mjs`: comprobación carácter a carácter. Sale limpio.
-- `tools/test-repaso.mjs`: 20 pruebas de las cajas de repaso y del reparto de los 25 minutos. Todas pasan.
-- `index.html`, `estilos.css` y `js/`: la app.
-  - `js/datos.js` carga vocab.json y scenes.json.
-  - `js/almacen.js` guarda el progreso en el aparato + exportar e importar copia.
-  - `js/voz.js` la voz zh-TW, normal y lenta, con aviso si no hay voz china.
-  - `js/repaso.js` cajas 1, 3, 7, 14 y 30 días.
-  - `js/sesion.js` el reparto de los 25 minutos entre los seis pasos.
-  - `js/pantallas.js` las cinco pantallas y la sesión.
-- `package.json`: solo para que node pueda ejecutar los scripts de `tools/`. La app sigue sin npm ni librerías.
+- `scenes.json`: los 28 días (280 líneas de diálogo, 84 preguntas, 140 retos, 550 frases de ejemplo).
+- La app entera: `index.html`, `estilos.css` y `js/` (datos, almacen, voz, repaso, sesion, pinyin, pantallas, recordatorio).
+- `manifest.webmanifest` + `iconos/` (180, 192 y 512 px, generados con `tools/iconos.mjs`): se instala con su icono y a pantalla completa.
+- `sw.js`: guarda los 17 archivos la primera vez; después funciona sin internet.
+- `js/recordatorio.js`: crea el evento diario repetido para el Calendario del iPhone.
+- Comprobaciones: `tools/validar.mjs` (escenas, limpio) y `tools/test-repaso.mjs` (20 pruebas, todas bien).
+- La carpeta ya es un repositorio de git con el primer commit hecho.
 
-## Cómo funciona la sesión (ya probado)
-1. **Oído**: suena una sílaba ya aprendida y eliges el tono; guarda tus fallos para insistir en ellos.
-2. **La escena**: suena entera sin texto, luego las 3 preguntas, y después puedes ver el texto con pinyin y traducción.
-3. **Nuevas**: cada palabra con audio normal y lento, significado, caracteres pequeños y su frase de la escena.
-4. **Repaso**: primero solo el sonido; tocas y se revela. "Otra vez" la devuelve al final de la sesión de hoy.
-5. **Dilo tú**: los 5 retos; lo dices y luego ves y oyes el modelo.
-6. **Hazlo de verdad**: la escena con la app haciendo del otro personaje.
-
-Lo que no cabe en los 25 minutos pasa al día siguiente, y el día del plan solo avanza cuando terminas las palabras nuevas de ese día. El progreso se guarda después de cada palabra y de cada repaso, así que puedes cerrar a media sesión.
+## Probado el 19/10/2026
+- Dos sesiones completas seguidas (día 1 y día 2): los seis pasos, las cajas de repaso (caja 1 → caja 2 al día siguiente), "Otra vez" devuelve la tarjeta al final de hoy, y lo que no cabe pasa al día siguiente.
+- Las cinco pantallas, el buscador de palabras y las 28 escenas.
+- Service worker activo con 17 archivos guardados; manifest e iconos correctos; el `.ics` sale con `RRULE:FREQ=DAILY` y su aviso.
+- Sin errores en la consola.
 
 ## Lo que tiene que hacer Javi
-- Probar una sesión entera (ver abajo) y decir qué le chirría.
-- **En el ordenador no hay voz china instalada**: Configuración › Hora e idioma › Idioma y región › Agregar idioma › 中文 (繁體，台灣) › marcar "Texto a voz". Sin eso se ve todo pero no se oye nada. En el iPhone normalmente ya está.
-
-## Cómo probarlo
-1. Abrir la carpeta del proyecto, escribir `cmd` en la barra de direcciones y pulsar Intro.
-2. `node tools/servidor.mjs`
-3. En el ordenador: `http://localhost:5173`. En el iPhone (mismo wifi): la otra dirección que sale.
-4. Comprobaciones: `node tools/validar.mjs` y `node tools/test-repaso.mjs`.
-5. `prueba.html` sigue ahí por si quieres ver todas las escenas de un vistazo.
+1. **Publicarla**: seguir `PUBLICAR.md` (cuenta de GitHub, `git push`, encender Pages, instalar desde Safari).
+2. **La voz china**: en el iPhone, Ajustes › Accesibilidad › Contenido leído › Voces › Chino (Taiwán). En el ordenador, Configuración › Hora e idioma › añadir 中文 (繁體，台灣) con "Texto a voz" (si no, en el PC no suena nada).
+3. Decirme qué le chirría de la app o de las escenas.
 
 ## Notas para mí (Claude)
 - No tocar `vocab.json`.
-- Fase 3: `js/grabadora.js` (getUserMedia + MediaRecorder, reproducir modelo → mi voz) y `js/reconocer.js` (webkitSpeechRecognition zh-TW, opcional, con pinyin del diccionario propio). El micro necesita https: en el iPhone solo funcionará una vez publicada (fase 5) o con localhost en el ordenador.
-- Fase 4: anillos más grandes, icono, manifest, service worker, recordatorio `.ics`, y sustituir `prueba.html`.
+- **Cada vez que cambie la app, subir `VERSION` en `sw.js`**, o el móvil seguirá con la versión vieja.
+- Fase 3: `js/grabadora.js` (getUserMedia + MediaRecorder; reproducir modelo → mi voz seguidas) y `js/reconocer.js` (webkitSpeechRecognition zh-TW, opcional, con pinyin sacado de vocab.json). El micro necesita https, así que solo se podrá probar en el iPhone con la app ya publicada.
+- Identidad de git puesta solo en este repositorio: Javi / javiercarpri.work@gmail.com.
