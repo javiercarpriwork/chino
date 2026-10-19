@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chino · vista previa de las escenas</title>
+<style>
+  :root {
+    --fondo: #f2f2f7;
+    --tarjeta: #ffffff;
+    --texto: #1c1c1e;
+    --suave: #6c6c70;
+    --linea: rgba(60,60,67,.12);
+    --azul: #007aff;
+    --t1: #e03131; /* 1.º tono */
+    --t2: #e8730c; /* 2.º tono */
+    --t3: #2f9e44; /* 3.er tono */
+    --t4: #1971c2; /* 4.º tono */
+    --t0: #8e8e93; /* neutro */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #000000;
+      --tarjeta: #1c1c1e;
+      --texto: #f2f2f7;
+      --suave: #98989d;
+      --linea: rgba(84,84,88,.6);
+      --azul: #0a84ff;
+      --t1: #ff6b6b; --t2: #ffa94d; --t3: #51cf66; --t4: #4dabf7; --t0: #aeaeb2;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0 16px 64px;
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo); color: var(--texto);
+    max-width: 680px; margin-inline: auto;
+  }
+  h1 { font-size: 30px; font-weight: 700; letter-spacing: -.5px; margin: 24px 0 2px; }
+  .sub { color: var(--suave); font-size: 15px; margin-bottom: 20px; }
+  .tarjeta { background: var(--tarjeta); border-radius: 14px; padding: 14px 16px; margin: 0 0 16px; }
+  .aviso { border-left: 4px solid #e8730c; }
+  .mal { border-left: 4px solid #e03131; }
+  .bien { border-left: 4px solid #2f9e44; }
+  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+       color: var(--suave); margin: 28px 0 8px 4px; }
+  button { font: inherit; color: var(--azul); background: none; border: 0; padding: 6px 8px;
+           border-radius: 10px; cursor: pointer; }
+  button:active { background: var(--linea); }
+  .chip { display: inline-block; padding: 5px 11px; margin: 3px 4px 3px 0; border-radius: 999px;
+          background: var(--fondo); border: 1px solid var(--linea); font-size: 14px; }
+  .dias { display: flex; gap: 8px; margin-bottom: 18px; }
+  .dias button { flex: 1; background: var(--tarjeta); border: 1px solid var(--linea); color: var(--texto); padding: 10px; }
+  .dias button[aria-pressed="true"] { background: var(--azul); color: #fff; border-color: var(--azul); }
+  .opciones { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 15px; color: var(--suave); margin-bottom: 18px; }
+  .opciones label { display: flex; align-items: center; gap: 6px; }
+  .linea { border-top: 1px solid var(--linea); padding: 12px 0; }
+  .linea:first-child { border-top: 0; }
+  .quien { font-size: 13px; color: var(--suave); margin-bottom: 2px; }
+  .han { font-size: 15px; color: var(--suave); letter-spacing: .5px; }
+  .pin { font-size: 22px; font-weight: 500; letter-spacing: -.2px; margin: 1px 0; }
+  .esp { font-size: 16px; color: var(--suave); }
+  .acciones { margin-top: 4px; margin-left: -8px; }
+  .reto { border-top: 1px solid var(--linea); padding: 12px 0; }
+  .oculto { display: none; }
+  .mini { font-size: 14px; color: var(--suave); }
+  footer { color: var(--suave); font-size: 13px; text-align: center; margin-top: 32px; }
+</style>
+</head>
+<body>
+
+<h1>Vista previa</h1>
+<p class="sub">Fase 1: solo para oír las escenas y ver si el contenido te gusta. La app de verdad llega en la fase 4.</p>
+
+<div id="voz" class="tarjeta aviso">Buscando la voz china del aparato…</div>
+
+<div class="dias" id="dias"></div>
+
+<div class="opciones">
+  <label><input type="checkbox" id="vPinyin" checked> pinyin</label>
+  <label><input type="checkbox" id="vEspanol" checked> español</label>
+  <label><input type="checkbox" id="vHanzi" checked> caracteres</label>
+  <label><input type="range" id="vLenta" min="30" max="100" value="55" style="width:90px"> <span id="vLentaTxt">lenta 0.55</span></label>
+</div>
+
+<div id="escena"></div>
+
+<footer>vocab.json y scenes.json se cargan tal cual: lo que oyes es lo que hay en los datos.</footer>
+
+<script>
+const TONOS = {
+  "āēīōūǖ": "t1", "áéíóúǘ": "t2", "ǎěǐǒǔǚ": "t3", "àèìòùǜ": "t4",
+};
+function tonoDe(silaba) {
+  for (const [marcas, clase] of Object.entries(TONOS)) {
+    for (const c of silaba) if (marcas.includes(c)) return clase;
+  }
+  return "t0";
+}
+function pinyinColoreado(pinyin) {
+  return pinyin.split(/(\s+)/).map((trozo) => {
+    if (!trozo.trim()) return trozo;
+    const t = tonoDe(trozo);
+    return `<span style="color: var(--${t})">${escapar(trozo)}</span>`;
+  }).join("");
+}
+const escapar = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------------------------------------------------------------- la voz
+let vozCh = null;
+function buscarVoz() {
+  const voces = speechSynthesis.getVoices();
+  const caja = document.getElementById("voz");
+  if (!voces.length) return false;
+
+  const tw = voces.filter((v) => /zh[-_]TW|zh[-_]Hant|Chinese \(Taiwan\)/i.test(v.lang + " " + v.name));
+  const otras = voces.filter((v) => /^zh/i.test(v.lang));
+  vozCh = tw[0] || otras[0] || null;
+
+  if (vozCh && tw.length) {
+    caja.className = "tarjeta bien";
+    caja.innerHTML = `Voz de Taiwán encontrada: <b>${escapar(vozCh.name)}</b> (${escapar(vozCh.lang)}).`;
+  } else if (vozCh) {
+    caja.className = "tarjeta aviso";
+    caja.innerHTML = `Solo hay voz china de <b>${escapar(vozCh.lang)}</b> (${escapar(vozCh.name)}), no de Taiwán.<br>
+      <span class="mini">En el iPhone: Ajustes › Accesibilidad › Contenido leído › Voces › Chino (Taiwán). Descarga una y vuelve aquí.</span>`;
+  } else {
+    caja.className = "tarjeta mal";
+    caja.innerHTML = `<b>No hay ninguna voz china en este aparato.</b><br>
+      <span class="mini">En el iPhone: Ajustes › Accesibilidad › Contenido leído › Voces › Chino (Taiwán) › descarga «Mei-Jia» o «Meijia».
+      En Windows: Configuración › Hora e idioma › Idioma y región › añadir «中文 (繁體，台灣)» con voz.</span>`;
+  }
+  return true;
+}
+speechSynthesis.addEventListener("voiceschanged", buscarVoz);
+buscarVoz();
+
+let cola = [];
+function decir(texto, lenta = false, alAcabar) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto);
+  if (vozCh) { u.voice = vozCh; u.lang = vozCh.lang; } else { u.lang = "zh-TW"; }
+  u.rate = lenta ? Number(document.getElementById("vLenta").value) / 100 : 1;
+  if (alAcabar) u.addEventListener("end", alAcabar);
+  speechSynthesis.speak(u);
+  if (!vozCh) buscarVoz(); // en iOS la lista llega tras el primer toque
+}
+function decirTodo(textos, i = 0) {
+  if (i >= textos.length) return;
+  decir(textos[i], false, () => setTimeout(() => decirTodo(textos, i + 1), 350));
+}
+
+// ---------------------------------------------------------------- los datos
+let vocab, escenas, dia = 1;
+
+function nuevasDe(d) {
+  return [
+    ...vocab.words.filter((w) => w.day === d),
+    ...vocab.expressions.filter((e) => e.day === d).map((e) => ({ id: e.id, hanzi: e.pattern, pinyin: e.pinyin, es: e.es, tts: e.example })),
+  ];
+}
+
+function pintar() {
+  const s = escenas.scenes.find((x) => x.day === dia);
+  const nuevas = nuevasDe(dia);
+  const ver = (id) => document.getElementById(id).checked;
+
+  const linea = (l) => `
+    <div class="linea">
+      <div class="quien">${escapar(l.who)}</div>
+      ${ver("vHanzi") ? `<div class="han">${escapar(l.hanzi)}</div>` : ""}
+      ${ver("vPinyin") ? `<div class="pin">${pinyinColoreado(l.pinyin)}</div>` : ""}
+      ${ver("vEspanol") ? `<div class="esp">${escapar(l.es)}</div>` : ""}
+      <div class="acciones">
+        <button data-decir="${escapar(l.hanzi)}">▶ normal</button>
+        <button data-decir="${escapar(l.hanzi)}" data-lenta="1">🐢 lenta</button>
+      </div>
+    </div>`;
+
+  document.getElementById("escena").innerHTML = `
+    <h2>Día ${s.day} de 30</h2>
+    <div class="tarjeta">
+      <div style="font-size:22px;font-weight:600">${escapar(s.title)}</div>
+      <div class="esp" style="margin-top:4px">${escapar(s.lugar)}</div>
+      ${s.sceneWords.length ? `<div style="margin-top:10px">
+        <div class="mini">Palabras de la escena (no son de la lista de 500):</div>
+        ${s.sceneWords.map((p) => `<span class="chip">${escapar(p.hanzi)} · ${escapar(p.pinyin)} · ${escapar(p.es)}</span>`).join("")}
+      </div>` : ""}
+      <div class="acciones" style="margin-top:8px">
+        <button id="todo">▶ Escuchar el diálogo entero</button>
+      </div>
+    </div>
+
+    <h2>El diálogo (${s.dialogue.length} líneas)</h2>
+    <div class="tarjeta">${s.dialogue.map(linea).join("")}</div>
+
+    <h2>Las 3 preguntas</h2>
+    <div class="tarjeta">
+      ${s.questions.map((q, i) => `
+        <div class="linea">
+          <div>${i + 1}. ${escapar(q.q)}</div>
+          <ul class="mini" style="margin:6px 0 0 -6px">${q.options.map((o, j) => `<li class="op" data-bien="${j === q.answer}">${escapar(o)}</li>`).join("")}</ul>
+        </div>`).join("")}
+      <div class="acciones"><button id="respuestas">Ver las respuestas</button></div>
+    </div>
+
+    <h2>Los 5 retos de «dilo tú»</h2>
+    <div class="tarjeta">
+      ${s.challenges.map((c, i) => `
+        <div class="reto">
+          <div>${i + 1}. ${escapar(c.es)}</div>
+          <div class="oculto" data-modelo>
+            ${ver("vHanzi") ? `<div class="han">${escapar(c.hanzi)}</div>` : ""}
+            <div class="pin">${pinyinColoreado(c.pinyin)}</div>
+          </div>
+          <div class="acciones">
+            <button data-ver>Ver el modelo</button>
+            <button data-decir="${escapar(c.hanzi)}">▶ Oírlo</button>
+          </div>
+        </div>`).join("")}
+    </div>
+
+    <h2>Las ${nuevas.length} palabras nuevas y su frase</h2>
+    <div class="tarjeta">
+      ${nuevas.map((n) => {
+        const ej = s.examples.find((e) => e.ref === n.id);
+        return `<div class="linea">
+          <div><b>${escapar(n.hanzi)}</b> <span class="mini">${escapar(n.pinyin)} · ${escapar(n.es)}</span></div>
+          ${ej ? `
+            ${ver("vHanzi") ? `<div class="han">${escapar(ej.hanzi)}</div>` : ""}
+            ${ver("vPinyin") ? `<div class="pin" style="font-size:19px">${pinyinColoreado(ej.pinyin)}</div>` : ""}
+            ${ver("vEspanol") ? `<div class="esp">${escapar(ej.es)} ${ej.deEscena ? '<span class="mini">· de la escena</span>' : ""}</div>` : ""}
+            <div class="acciones">
+              <button data-decir="${escapar(n.tts || n.hanzi)}">▶ la palabra</button>
+              <button data-decir="${escapar(n.tts || n.hanzi)}" data-lenta="1">🐢 lenta</button>
+              <button data-decir="${escapar(ej.hanzi)}">▶ la frase</button>
+            </div>` : '<div class="esp">falta la frase de ejemplo</div>'}
+        </div>`;
+      }).join("")}
+    </div>`;
+
+  document.getElementById("todo").onclick = () => decirTodo(s.dialogue.map((l) => l.hanzi));
+  document.getElementById("respuestas").onclick = (ev) => {
+    for (const li of document.querySelectorAll(".op")) {
+      if (li.dataset.bien === "true") { li.style.color = "var(--t3)"; li.style.fontWeight = "600"; }
+    }
+    ev.target.remove();
+  };
+  for (const b of document.querySelectorAll("[data-ver]")) {
+    b.onclick = () => { b.closest(".reto").querySelector("[data-modelo]").classList.remove("oculto"); b.remove(); };
+  }
+  for (const b of document.querySelectorAll("[data-decir]")) {
+    b.onclick = () => decir(b.dataset.decir, b.dataset.lenta === "1");
+  }
+}
+
+async function arrancar() {
+  [vocab, escenas] = await Promise.all([
+    fetch("vocab.json").then((r) => r.json()),
+    fetch("scenes.json").then((r) => r.json()),
+  ]);
+
+  document.getElementById("dias").innerHTML = escenas.scenes
+    .map((s) => `<button data-dia="${s.day}" aria-pressed="${s.day === dia}">Día ${s.day}</button>`).join("");
+  for (const b of document.querySelectorAll("[data-dia]")) {
+    b.onclick = () => {
+      dia = Number(b.dataset.dia);
+      for (const o of document.querySelectorAll("[data-dia]")) o.setAttribute("aria-pressed", String(Number(o.dataset.dia) === dia));
+      pintar();
+    };
+  }
+  for (const id of ["vPinyin", "vEspanol", "vHanzi"]) document.getElementById(id).onchange = pintar;
+  const r = document.getElementById("vLenta");
+  r.oninput = () => { document.getElementById("vLentaTxt").textContent = "lenta " + (r.value / 100).toFixed(2); };
+
+  pintar();
+}
+arrancar();
+</script>
+</body>
+</html>

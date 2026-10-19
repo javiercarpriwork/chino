@@ -1,0 +1,6 @@
+{
+  "name": "chino",
+  "private": true,
+  "type": "module",
+  "comentario": "Este archivo solo sirve para que node pueda ejecutar los scripts de tools/. La app no usa npm ni se instala nada."
+}
