@@ -5,7 +5,7 @@ import { cargarDatos } from "./datos.js";
 import * as almacen from "./almacen.js";
 import * as voz from "./voz.js";
 import * as repaso from "./repaso.js";
-import { planificar, PASOS, TOTAL, silabasParaTonos } from "./sesion.js";
+import { planificar, PASOS, silabasParaTonos } from "./sesion.js";
 import { colorear, escapar, tonoDe, esUnaSilaba } from "./pinyin.js";
 import { descargarRecordatorio } from "./recordatorio.js";
 import * as grabadora from "./grabadora.js";
@@ -67,14 +67,32 @@ function anillo(valor, objetivo, color, etiqueta, tam = 100) {
   </div>`;
 }
 
+// Los pasos de hoy dependen del modo: los seis de siempre, los seis con la
+// prueba de escucha en lugar de las palabras nuevas, o los dos de mantenimiento.
+const pasos = () => PASOS[ses.plan.modo] || PASOS.normal;
+
 function objetivosDe(p) {
   const lineas = p.escena ? p.escena.dialogue.length : 0;
   const mias = p.escena ? p.escena.dialogue.filter((l) => l.speaker === "B").length : 0;
+  // En mantenimiento solo hablas en los repasos que van al revés: uno de cada tres.
+  if (p.modo === "mantenimiento") {
+    return {
+      escuchar: Math.max(1, lineas),
+      hablar: Math.max(1, Math.floor(p.repasos.length / 3)),
+      repasar: Math.max(1, p.repasos.length),
+    };
+  }
   return {
-    escuchar: Math.max(1, p.nuevas.length + lineas),
+    escuchar: Math.max(1, p.nuevas.length + p.escucha.length + lineas),
     hablar: Math.max(1, p.retos.length + mias),
     repasar: Math.max(1, p.repasos.length),
   };
+}
+
+function subtituloDeHoy(p) {
+  if (p.modo === "prueba") return `Día ${p.dia} de 30 · prueba final de escucha`;
+  if (p.modo === "mantenimiento") return "Mantenimiento · 10 minutos al día";
+  return `Día ${p.dia} de 30`;
 }
 
 PANTALLAS.hoy = function () {
@@ -87,7 +105,7 @@ PANTALLAS.hoy = function () {
 
   montar(`
     <h1>Hoy</h1>
-    <p class="suave">${p.esPrueba ? "Repaso general y prueba de escucha" : `Día ${p.dia} de 30`}</p>
+    <p class="suave">${escapar(subtituloDeHoy(p))}</p>
 
     <div class="anillos">
       ${anillo(hecho.escuchar, objHoy.escuchar, "var(--azul)", "Escuchar")}
@@ -97,13 +115,14 @@ PANTALLAS.hoy = function () {
 
     <div class="tarjeta centro">
       <div style="font-size:21px;font-weight:600">${escapar(p.escena ? p.escena.title : "Repaso")}</div>
-      <div class="mini" style="margin-top:4px">${escapar(p.escena ? p.escena.lugar || "" : "")}</div>
+      <div class="mini" style="margin-top:4px">${p.modo === "normal" ? escapar(p.escena ? p.escena.lugar || "" : "") : "Una escena ya vista, al azar"}</div>
     </div>
 
     <div class="tarjeta">
-      <div class="fila"><span>Palabras nuevas de hoy</span><b>${p.nuevas.length}</b></div>
+      ${p.modo === "normal" ? `<div class="fila"><span>Palabras nuevas de hoy</span><b>${p.nuevas.length}</b></div>` : ""}
+      ${p.modo === "prueba" ? `<div class="fila"><span>Preguntas de escucha</span><b>${p.escucha.length}</b></div>` : ""}
       <div class="fila"><span>Repasos que tocan</span><b>${p.repasos.length}${p.atrasados > p.repasos.length ? ` de ${p.atrasados}` : ""}</b></div>
-      <div class="fila"><span>Duración</span><b>25 min</b></div>
+      <div class="fila"><span>Duración</span><b>${Math.round(p.total / 60)} min</b></div>
       ${p.restantes.length ? `<div class="fila"><span class="mini">Hoy no caben todas: ${p.restantes.length} pasan a mañana</span></div>` : ""}
     </div>
 
@@ -194,7 +213,7 @@ PANTALLAS.progreso = function () {
   montar(`
     <h1>Progreso</h1>
     <div class="tarjeta">
-      <div class="fila"><span>Día del plan</span><b>${Math.min(estado.diaPlan, 30)} de 30</b></div>
+      <div class="fila"><span>Día del plan</span><b>${estado.diaPlan > 30 ? "mantenimiento" : `${estado.diaPlan} de 30`}</b></div>
       <div class="fila"><span>Días estudiados</span><b>${estado.diasHechos.length}</b></div>
       <div class="fila"><span>Dominadas</span><b>${dom} de ${datos.totalItems}</b></div>
       <div class="fila"><span>Aprendiendo</span><b>${apr}</b></div>
@@ -363,6 +382,7 @@ function empezarSesion() {
     oido: { items: silabasParaTonos(estado, datos, tonoDe, esUnaSilaba), i: 0, bien: 0 },
     escena: { fase: "audio", i: 0, aciertos: 0 },
     nuevas: { i: 0 },
+    escucha: { i: 0, bien: 0 },
     rep: { cola: plan.repasos.slice(), i: 0, revelado: false, hechos: 0 },
     dilo: { i: 0, visto: false },
     real: { i: 0, esperando: false },
@@ -380,10 +400,10 @@ function arrancarReloj() {
     const barra = document.getElementById("barraTiempo");
     if (!barra || !ses) return;
     const pasado = (Date.now() - ses.inicio) / 1000;
-    barra.style.width = Math.min(100, (pasado / TOTAL) * 100) + "%";
+    barra.style.width = Math.min(100, (pasado / ses.plan.total) * 100) + "%";
     const quedan = document.getElementById("quedan");
     if (quedan) {
-      const m = Math.max(0, Math.ceil((TOTAL - pasado) / 60));
+      const m = Math.max(0, Math.ceil((ses.plan.total - pasado) / 60));
       quedan.textContent = m > 0 ? `quedan ${m} min` : "se acabó el tiempo";
     }
   }, 1000);
@@ -391,11 +411,12 @@ function arrancarReloj() {
 function terminarReloj() { if (reloj) clearInterval(reloj); reloj = null; voz.callar(); }
 
 function cabecera() {
-  const p = PASOS[ses.paso];
+  const lista = pasos();
+  const p = lista[ses.paso];
   return `<div class="cabecera">
       <div class="barra"><i id="barraTiempo" style="width:0%"></i></div>
       <div class="datos">
-        <span><b>${ses.paso + 1}/6 · ${p.titulo}</b> · ${p.nota}</span>
+        <span><b>${ses.paso + 1}/${lista.length} · ${p.titulo}</b> · ${p.nota}</span>
         <span id="quedan"></span>
       </div>
     </div>`;
@@ -409,13 +430,22 @@ function siguientePaso() {
   voz.callar();
   ses.paso += 1;
   ses.inicioPaso = Date.now();
-  if (ses.paso >= PASOS.length) return acabarSesion();
+  if (ses.paso >= pasos().length) return acabarSesion();
   pintarPaso();
 }
 
+const PINTORES = {
+  oido: () => pasoOido(),
+  escena: () => pasoEscena(),
+  nuevas: () => pasoNuevas(),
+  escucha: () => pasoEscucha(),
+  repaso: () => pasoRepaso(),
+  dilo: () => pasoDilo(),
+  real: () => pasoReal(),
+};
+
 function pintarPaso() {
-  const quien = [pasoOido, pasoEscena, pasoNuevas, pasoRepaso, pasoDilo, pasoReal][ses.paso];
-  quien();
+  PINTORES[pasos()[ses.paso].clave]();
   window.scrollTo(0, 0);
 }
 
@@ -584,6 +614,47 @@ function pasoNuevas() {
   };
 }
 
+// ------------------------------- 3 bis. Prueba de escucha (días 29 y 30)
+function pasoEscucha() {
+  const p = ses.escucha;
+  const preguntas = ses.plan.escucha;
+
+  if (!preguntas.length || p.i >= preguntas.length) {
+    montar(`${cabecera()}
+      <div class="tarjeta centro"><p>${preguntas.length
+        ? `Prueba de escucha: <b>${p.bien} de ${p.i}</b> bien.`
+        : "Todavía no hay bastante aprendido para la prueba de escucha."}</p></div>
+      ${pie('<button class="grande" id="seguir">Siguiente paso</button>')}`);
+    $("#seguir").onclick = siguientePaso;
+    return;
+  }
+
+  const q = preguntas[p.i];
+  montar(`${cabecera()}
+    <div class="tarjeta">
+      <p class="mini">Pregunta ${p.i + 1} de ${preguntas.length} · ${q.tipo === "frase" ? "una frase" : "una palabra"}</p>
+      <p class="suave centro">Suena y eliges qué significa.</p>
+      <button class="grande gris" id="oir" style="margin:10px 0">▶ Oír otra vez</button>
+      ${q.opciones.map((o, j) => `<button class="opcion" data-op="${j}">${escapar(o)}</button>`).join("")}
+      <p class="mini">Aciertos: ${p.bien} de ${p.i}</p>
+    </div>
+    ${pie('<button class="grande gris" id="saltar">Dejar la prueba</button>')}`);
+
+  const sonar = () => voz.decir(q.tts, opcionesVoz());
+  sonar();
+  $("#oir").onclick = sonar;
+  $("#saltar").onclick = siguientePaso;
+  $$("[data-op]").forEach((b) => (b.onclick = () => {
+    const bien = Number(b.dataset.op) === q.correcta;
+    b.classList.add(bien ? "bien" : "mal");
+    if (!bien) $$(`[data-op="${q.correcta}"]`)[0].classList.add("bien");
+    if (bien) p.bien += 1;
+    ses.contadores.escuchar += 1;
+    $$("[data-op]").forEach((x) => (x.onclick = null));
+    setTimeout(() => { p.i += 1; pasoEscucha(); }, bien ? 700 : 1600);
+  }));
+}
+
 // ---------------------------------------------------------- 4. Repaso
 function pasoRepaso() {
   const r = ses.rep;
@@ -734,9 +805,10 @@ function acabarSesion() {
   const noHechas = ses.plan.nuevas.slice(ses.nuevas.i);
 
   // Lo que no ha entrado hoy entra mañana; el día avanza solo si se acabó la lista.
+  // Los días 29 y 30 avanzan siempre; desde el 31 el contador se queda quieto.
   estado.pendientesNuevas = [...noHechas, ...ses.plan.restantes];
-  if (!estado.pendientesNuevas.length && !ses.plan.esPrueba) estado.diaPlan = Math.min(estado.diaPlan + 1, 31);
-  else if (ses.plan.esPrueba) estado.diaPlan = Math.min(estado.diaPlan + 1, 31);
+  if (ses.plan.modo === "prueba") estado.diaPlan = Math.min(estado.diaPlan + 1, 31);
+  else if (ses.plan.modo === "normal" && !estado.pendientesNuevas.length) estado.diaPlan = Math.min(estado.diaPlan + 1, 31);
 
   if (!estado.diasHechos.includes(fechaHoy())) estado.diasHechos.push(fechaHoy());
   estado.totalSegundos += segundos;
@@ -746,6 +818,7 @@ function acabarSesion() {
     objetivos: ses.objetivos,
     nuevas: hechas.length,
     repasos: ses.rep.hechos,
+    escucha: { bien: ses.escucha.bien, de: ses.escucha.i },
     segundos,
   };
   const guardado = almacen.guardar(estado);
@@ -759,9 +832,10 @@ function acabarSesion() {
       ${anillo(ses.contadores.repasar, ses.objetivos.repasar, "var(--naranja)", "Repasar")}
     </div>
     <div class="tarjeta">
-      <div class="fila"><span>Palabras nuevas</span><b>${hechas.length}</b></div>
+      ${ses.plan.modo === "normal" ? `<div class="fila"><span>Palabras nuevas</span><b>${hechas.length}</b></div>` : ""}
+      ${ses.plan.modo === "prueba" ? `<div class="fila"><span>Prueba de escucha</span><b>${ses.escucha.bien} de ${ses.escucha.i}</b></div>` : ""}
       <div class="fila"><span>Repasos</span><b>${ses.rep.hechos}</b></div>
-      <div class="fila"><span>Tonos acertados</span><b>${ses.oido.bien} de ${ses.oido.i}</b></div>
+      ${ses.plan.modo === "mantenimiento" ? "" : `<div class="fila"><span>Tonos acertados</span><b>${ses.oido.bien} de ${ses.oido.i}</b></div>`}
       <div class="fila"><span>Tiempo</span><b>${min} min</b></div>
       ${estado.pendientesNuevas.length ? `<div class="fila"><span class="mini">${estado.pendientesNuevas.length} palabras pasan a mañana</span></div>` : ""}
     </div>

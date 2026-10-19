@@ -119,6 +119,9 @@ nav#pestanas {
   backdrop-filter: blur(14px); border-top: 1px solid var(--linea);
   padding-bottom: env(safe-area-inset-bottom);
 }
+/* Durante la sesión la barra se esconde de verdad: si no, tapa media pantalla
+   del botón grande de abajo (el "display: flex" de arriba gana al atributo). */
+nav#pestanas[hidden] { display: none; }
 nav#pestanas button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
                       font-size: 11px; color: var(--suave); padding: 7px 0; border-radius: 0; }
 nav#pestanas button span { font-size: 17px; line-height: 1; }
