@@ -1,84 +1,63 @@
-// La sesión diaria y sus tres modos:
-//   - normal (días 1 a 28): los seis pasos y 25 minutos fijos.
-//   - prueba (días 29 y 30): nada nuevo; en el hueco de las palabras nuevas
-//     entra la prueba final de escucha, con escenas mezcladas.
-//   - mantenimiento (desde el día 31): 10 minutos, una escena al azar y repasos.
-// Si hay muchos repasos atrasados, en los días normales el repaso se come
-// tiempo de las palabras nuevas y ese día entran menos; lo que falte entra al
-// día siguiente.
-// Este archivo tampoco toca el navegador: se puede probar con node.
+// La sesión diaria y sus cuatro modos:
+//   - corto (entre semana): 10 minutos. Escena, 7 palabras nuevas, repaso y un reto.
+//   - largo (los dos días que elijas): 30 minutos. Los seis pasos completos.
+//   - prueba: cuando ya has visto las 340, la prueba final de escucha.
+//   - mantenimiento: después de la prueba, 10 minutos de escena y repaso.
+// Si hay muchos repasos atrasados, el repaso se come tiempo de las palabras
+// nuevas y ese día entran menos; lo que falte entra al día siguiente.
+// Este archivo no toca el navegador: se puede probar con node.
 
 import { pendientes } from "./repaso.js";
+import * as plan from "./plan.js";
 
-export const PRESUPUESTO = {
-  oido: 60,      // 1 min
-  escena: 180,   // 3 min
-  nuevas: 480,   // 8 min
-  repaso: 360,   // 6 min
-  dilo: 300,     // 5 min
-  real: 120,     // 2 min
-};
-export const TOTAL = Object.values(PRESUPUESTO).reduce((a, b) => a + b, 0); // 1500 s = 25 min
-
-// Días 29 y 30: la prueba de escucha ocupa el hueco de las palabras nuevas.
-export const PRESUPUESTO_PRUEBA = {
-  oido: 60,
-  escena: 180,
-  escucha: 480,  // 8 min
-  repaso: 360,
-  dilo: 300,
-  real: 120,
+export const PRESUPUESTOS = {
+  corto:         { escena: 110, nuevas: 210, repaso: 240, dilo: 40 },                        // 600 s = 10 min
+  largo:         { oido: 120, escena: 300, nuevas: 420, repaso: 480, dilo: 240, real: 240 }, // 1800 s = 30 min
+  prueba:        { escena: 300, escucha: 600, repaso: 600, dilo: 300 },                      // 1800 s
+  mantenimiento: { escena: 180, repaso: 420 },                                               // 600 s
 };
 
-// Desde el día 31: 10 minutos, una escena al azar y repasos.
-export const PRESUPUESTO_MANTENIMIENTO = {
-  escena: 180,   // 3 min
-  repaso: 420,   // 7 min
-};
-
-export const COSTE = { repaso: 8, nueva: 24, reto: 35, escucha: 24 };
+// Lo que cuesta cada cosa, en segundos. El repaso va con su frase, por eso
+// cuesta más que oír la palabra suelta.
+export const COSTE = { repaso: 12, nueva: 30, reto: 35, escucha: 24 };
 
 const PASO = {
   oido: { clave: "oido", titulo: "Oído", nota: "¿Qué tono has oído?" },
   escena: { clave: "escena", titulo: "La escena", nota: "Escucha y responde" },
   nuevas: { clave: "nuevas", titulo: "Nuevas", nota: "Las palabras de hoy" },
   escucha: { clave: "escucha", titulo: "Prueba de escucha", nota: "¿Qué significa lo que suena?" },
-  repaso: { clave: "repaso", titulo: "Repaso", nota: "Solo el sonido" },
+  repaso: { clave: "repaso", titulo: "Repaso", nota: "Una frase, ¿la entiendes?" },
   dilo: { clave: "dilo", titulo: "Dilo tú", nota: "Tú lo dices" },
   real: { clave: "real", titulo: "Hazlo de verdad", nota: "Tú eres uno de los personajes" },
 };
 
-// Los pasos de cada modo, en orden.
 export const PASOS = {
-  normal: [PASO.oido, PASO.escena, PASO.nuevas, PASO.repaso, PASO.dilo, PASO.real],
-  prueba: [PASO.oido, PASO.escena, PASO.escucha, PASO.repaso, PASO.dilo, PASO.real],
+  corto: [PASO.escena, PASO.nuevas, PASO.repaso, PASO.dilo],
+  largo: [PASO.oido, PASO.escena, PASO.nuevas, PASO.repaso, PASO.dilo, PASO.real],
+  prueba: [PASO.escena, PASO.escucha, PASO.repaso, PASO.dilo],
   mantenimiento: [PASO.escena, PASO.repaso],
 };
 
-export function modoDe(dia) {
-  if (dia >= 31) return "mantenimiento";
-  if (dia >= 29) return "prueba";
-  return "normal";
+export const totalDe = (modo) =>
+  Object.values(PRESUPUESTOS[modo] || PRESUPUESTOS.corto).reduce((a, b) => a + b, 0);
+
+export function modoDe(estado, hoy) {
+  if ((estado.vistas || 0) >= plan.TOTAL_ITEMS) return estado.pruebaHecha ? "mantenimiento" : "prueba";
+  return plan.tipoDeDia(hoy, estado.ajustes && estado.ajustes.diasLargos);
 }
 
-const presupuestoDe = (modo) => ({
-  normal: PRESUPUESTO,
-  prueba: PRESUPUESTO_PRUEBA,
-  mantenimiento: PRESUPUESTO_MANTENIMIENTO,
-}[modo]);
-
 export function planificar(estado, datos, hoy) {
-  const dia = estado.diaPlan;
-  const modo = modoDe(dia);
-  const tiempos = { ...presupuestoDe(modo) };
+  const modo = modoDe(estado, hoy);
+  const tiempos = { ...PRESUPUESTOS[modo] };
+  const conNuevas = modo === "corto" || modo === "largo";
+  const vistas = estado.vistas || 0;
   const atrasados = pendientes(estado, hoy);
 
-  // Cuántos repasos caben en su hueco. En los días normales, si hay muchos
-  // atrasados el repaso le quita tiempo a las palabras nuevas. En la prueba no:
-  // los días 29 y 30 la prueba de escucha es lo importante y no se toca.
+  // Cuántos repasos caben en su hueco. Si hay muchos atrasados, el repaso le
+  // quita tiempo a las palabras nuevas (nunca a la prueba ni a la escena).
   const cabenRepaso = Math.floor(tiempos.repaso / COSTE.repaso);
   let repasos = atrasados.slice(0, cabenRepaso);
-  if (modo === "normal" && atrasados.length > cabenRepaso) {
+  if (conNuevas && atrasados.length > cabenRepaso) {
     const extra = Math.min(
       atrasados.length - cabenRepaso,
       Math.floor(tiempos.nuevas / COSTE.repaso),
@@ -88,36 +67,39 @@ export function planificar(estado, datos, hoy) {
     repasos = atrasados.slice(0, cabenRepaso + extra);
   }
 
-  // Las palabras nuevas, solo en los días normales. Lo que quedó pendiente ayer
-  // entra primero; desde el día 29 ya no entra nada nuevo.
-  const candidatas = estado.pendientesNuevas.length
-    ? estado.pendientesNuevas.slice()
-    : (dia <= 28 ? datos.nuevasDe(dia) : []);
-  const caben = modo === "normal" ? Math.floor(tiempos.nuevas / COSTE.nueva) : 0;
-  const nuevas = candidatas.slice(0, caben);
-  const restantes = candidatas.slice(caben);
+  // Las palabras nuevas salen de la lista del plan, siempre en orden.
+  const items = plan.itemsDelPlan(datos);
+  const caben = conNuevas ? Math.floor(tiempos.nuevas / COSTE.nueva) : 0;
+  const nuevas = items.slice(vistas, vistas + caben);
+  const quedan = Math.max(0, plan.TOTAL_ITEMS - vistas - nuevas.length);
 
-  // La escena del día; en la prueba y en mantenimiento, una ya vista al azar.
-  let escena = datos.escenaPorDia.get(Math.min(dia, 28)) || null;
-  if (modo !== "normal") {
-    const vistas = datos.escenas.scenes.filter((s) => s.day <= 28);
-    if (vistas.length) escena = vistas[Math.floor(Math.random() * vistas.length)];
+  // El bloque de hoy: la escena a la que pertenecen las palabras de hoy.
+  const bloque = plan.bloqueDe(nuevas.length ? vistas : Math.max(0, vistas - 1));
+  let escena = datos.escenaPorDia.get(bloque) || null;
+  if (!conNuevas) {
+    const vistasEscenas = datos.escenas.scenes.filter((s) => s.day <= plan.BLOQUES);
+    if (vistasEscenas.length) escena = vistasEscenas[Math.floor(Math.random() * vistasEscenas.length)];
   }
+
+  const cabenRetos = Math.max(1, Math.floor((tiempos.dilo || 0) / COSTE.reto));
+  const retos = escena && modo !== "mantenimiento" ? escena.challenges.slice(0, cabenRetos) : [];
 
   const escucha = modo === "prueba"
     ? preguntasEscucha(estado, datos, Math.floor(tiempos.escucha / COSTE.escucha))
     : [];
 
   return {
-    dia,
     modo,
+    bloque,
     escena,
     nuevas,
-    restantes,
     repasos,
     escucha,
+    retos,
+    vistas,
+    quedan,
     atrasados: atrasados.length,
-    retos: escena && modo !== "mantenimiento" ? escena.challenges : [],
+    preguntas: modo === "corto" ? 1 : 3,   // entre semana, una sola pregunta
     tiempos,
     total: Object.values(tiempos).reduce((a, b) => a + b, 0),
   };
@@ -145,10 +127,9 @@ function conOpciones(bien, bolsa) {
   return { ...bien, opciones: mezcladas, correcta: mezcladas.indexOf(bien.es) };
 }
 
-// La prueba final de escucha de los días 29 y 30: suena algo ya aprendido
-// (una palabra o una frase de una escena) y hay que elegir su significado entre
-// cuatro. Mezcla palabras y frases, y las frases salen de escenas distintas:
-// como mucho dos de cada una.
+// La prueba final de escucha: suena algo ya aprendido (una palabra o una frase
+// de una escena) y hay que elegir su significado entre cuatro. Mezcla palabras
+// y frases, y las frases salen de escenas distintas: como mucho dos de cada una.
 export function preguntasEscucha(estado, datos, cuantas = 20) {
   if (cuantas <= 0) return [];
 
@@ -158,7 +139,7 @@ export function preguntasEscucha(estado, datos, cuantas = 20) {
     if (it && it.es) palabras.push({ clave: "p" + id, tts: it.tts, es: it.es, tipo: "palabra", de: "" });
   }
 
-  const hasta = Math.min(28, estado.diaPlan);
+  const hasta = plan.bloqueDe(estado.vistas || 0);
   const frases = [];
   for (const s of datos.escenas.scenes) {
     if (s.day > hasta) continue;

@@ -1,13 +1,11 @@
-// Comprueba que las cajas de repaso y el reparto del tiempo hacen lo que
-// tienen que hacer, en los tres modos de la sesión (normal, la prueba de los
-// días 29 y 30, y el mantenimiento desde el 31).
+// Comprueba las cajas de repaso, el calendario del 24 de octubre al 30 de
+// noviembre y el reparto del tiempo en los cuatro modos de la sesión
+// (corto de 10 min, largo de 30, la prueba final y el mantenimiento).
 // Se ejecuta con:  node tools/test-repaso.mjs
 
 import { CAJAS, sumarDias, estrenar, responder, pendientes, dominadas } from "../js/repaso.js";
-import {
-  planificar, modoDe, PASOS, COSTE, TOTAL,
-  PRESUPUESTO, PRESUPUESTO_PRUEBA, PRESUPUESTO_MANTENIMIENTO,
-} from "../js/sesion.js";
+import { planificar, modoDe, PASOS, COSTE, PRESUPUESTOS, totalDe } from "../js/sesion.js";
+import * as plan from "../js/plan.js";
 
 let fallos = 0;
 const comprueba = (nombre, real, esperado) => {
@@ -17,7 +15,9 @@ const comprueba = (nombre, real, esperado) => {
 };
 
 const HOY = "2026-10-19";
-const nuevoEstado = () => ({ diaPlan: 1, pendientesNuevas: [], tarjetas: {}, tonos: {} });
+const SABADO = "2026-10-24";   // el primer día del plan
+const LUNES = "2026-10-26";
+const nuevoEstado = () => ({ vistas: 0, tarjetas: {}, tonos: {}, ajustes: { diasLargos: [6, 0] } });
 
 // --- fechas
 comprueba("un día después", sumarDias("2026-10-19", 1), "2026-10-20");
@@ -74,94 +74,108 @@ const escenaFalsa = (day) => ({
     es: `frase ${day}-${i}`,
   })),
 });
-const itemsFalsos = new Map(Array.from({ length: 200 }, (_, i) => [
-  "w" + i,
-  { id: "w" + i, tipo: "palabra", dia: 1, hanzi: "字" + i, pinyin: "zi", es: "significado " + i, tts: "字" + i },
-]));
+
+const itemsFalsos = new Map();
+for (let b = 1; b <= plan.BLOQUES; b++) {
+  for (let i = 0; i < plan.ITEMS_POR_BLOQUE; i++) {
+    const id = `b${b}-${i}`;
+    itemsFalsos.set(id, { id, tipo: "palabra", dia: b, hanzi: "字", pinyin: "zi", es: `sentido ${b}-${i}`, tts: "字" });
+  }
+}
+const bloques = Array.from({ length: plan.BLOQUES }, (_, k) => escenaFalsa(k + 1));
 const datosFalsos = {
-  nuevasDe: (dia) => Array.from({ length: 20 }, (_, i) => `d${dia}-${i}`),
-  escenaPorDia: new Map([1, 2, 3].map((d) => [d, escenaFalsa(d)])),
-  escenas: { scenes: [escenaFalsa(1), escenaFalsa(2), escenaFalsa(3)] },
+  nuevasDe: (b) => Array.from({ length: plan.ITEMS_POR_BLOQUE }, (_, i) => `b${b}-${i}`),
+  escenaPorDia: new Map(bloques.map((s) => [s.day, s])),
+  escenas: { scenes: bloques },
   item: (id) => itemsFalsos.get(id),
 };
 
-// --- los tres modos de la sesión
-comprueba("los días 1 a 28 son normales", [modoDe(1), modoDe(28)], ["normal", "normal"]);
-comprueba("los días 29 y 30 son la prueba final", [modoDe(29), modoDe(30)], ["prueba", "prueba"]);
-comprueba("desde el día 31 es mantenimiento", [modoDe(31), modoDe(45)], ["mantenimiento", "mantenimiento"]);
-comprueba("los seis pasos de siempre", PASOS.normal.map((x) => x.clave), ["oido", "escena", "nuevas", "repaso", "dilo", "real"]);
-comprueba("la prueba cambia las nuevas por la escucha", PASOS.prueba.map((x) => x.clave), ["oido", "escena", "escucha", "repaso", "dilo", "real"]);
-comprueba("los seis pasos suman 25 minutos", TOTAL, 25 * 60);
-comprueba("la prueba también suma 25 minutos", Object.values(PRESUPUESTO_PRUEBA).reduce((a, b) => a + b, 0), 25 * 60);
+// --- el calendario: del 24 de octubre al 30 de noviembre
+{
+  const r = plan.resumenDelPlan();
+  comprueba("38 días de plan", r.dias, 38);
+  comprueba("12 largos (sáb y dom) y 26 cortos", [r.largos, r.cortos], [12, 26]);
+  comprueba("620 minutos en total", r.minutos, 620);
+  comprueba("caben las 340 palabras del plan", r.hueco >= plan.TOTAL_ITEMS, true);
+  comprueba("son 17 bloques de 20", plan.TOTAL_ITEMS, 340);
+}
 
-// --- el reparto de los 25 minutos en un día normal
+comprueba("el sábado es día largo", plan.tipoDeDia(SABADO), "largo");
+comprueba("el lunes es día corto", plan.tipoDeDia(LUNES), "corto");
+comprueba("puedo elegir otros dos días", [plan.tipoDeDia(LUNES, [1, 4]), plan.tipoDeDia(SABADO, [1, 4])], ["largo", "corto"]);
+comprueba("el primer día deberías llevar 14", plan.idealHasta(plan.INICIO), 14);
+comprueba("al final del plan, las 340", plan.idealHasta(plan.FIN), 340);
+comprueba("la lista del plan tiene 340 palabras", plan.itemsDelPlan(datosFalsos).length, 340);
+comprueba("y van en orden, bloque a bloque", plan.itemsDelPlan(datosFalsos)[20], "b2-0");
+comprueba("el bloque sale del número de palabra", [plan.bloqueDe(0), plan.bloqueDe(19), plan.bloqueDe(20), plan.bloqueDe(339)], [1, 1, 2, 17]);
+
+// --- los cuatro modos
+comprueba("entre semana, 10 minutos", totalDe("corto"), 10 * 60);
+comprueba("el fin de semana, 30 minutos", totalDe("largo"), 30 * 60);
+comprueba("cuatro pasos entre semana", PASOS.corto.map((x) => x.clave), ["escena", "nuevas", "repaso", "dilo"]);
+comprueba("seis el fin de semana", PASOS.largo.map((x) => x.clave), ["oido", "escena", "nuevas", "repaso", "dilo", "real"]);
+
 {
   const e = nuevoEstado();
-  const p = planificar(e, datosFalsos, HOY);
-  comprueba("día 1 sin repasos: entran las 20 nuevas", [p.nuevas.length, p.repasos.length, p.restantes.length], [20, 0, 0]);
+  comprueba("el sábado toca sesión larga", modoDe(e, SABADO), "largo");
+  comprueba("el lunes, corta", modoDe(e, LUNES), "corto");
+  e.vistas = plan.TOTAL_ITEMS;
+  comprueba("al acabar las 340 llega la prueba", modoDe(e, LUNES), "prueba");
+  e.pruebaHecha = true;
+  comprueba("y después, mantenimiento", modoDe(e, LUNES), "mantenimiento");
+}
+
+// --- el reparto del tiempo
+{
+  const e = nuevoEstado();
+  const p = planificar(e, datosFalsos, SABADO);
+  comprueba("día largo: 14 nuevas y 30 minutos", [p.nuevas.length, p.total], [14, 1800]);
+  comprueba("empieza por el bloque 1 y su escena", [p.bloque, p.escena.day], [1, 1]);
+  comprueba("cinco retos el fin de semana", p.retos.length, 5);
+  comprueba("y tres preguntas de la escena", p.preguntas, 3);
 }
 
 {
-  // 100 repasos atrasados: el repaso se come el tiempo de las nuevas
+  const e = nuevoEstado();
+  const p = planificar(e, datosFalsos, LUNES);
+  comprueba("día corto: 7 nuevas y 10 minutos", [p.nuevas.length, p.total], [7, 600]);
+  comprueba("un reto y una pregunta entre semana", [p.retos.length, p.preguntas], [1, 1]);
+  comprueba("20 repasos caben en sus 4 minutos", Math.floor(p.tiempos.repaso / COSTE.repaso), 20);
+}
+
+{
+  // sigues por donde ibas, no por la fecha
+  const e = nuevoEstado();
+  e.vistas = 25;
+  const p = planificar(e, datosFalsos, LUNES);
+  comprueba("sigue donde lo dejaste", p.nuevas[0], "b2-5");
+  comprueba("y la escena es la de ese bloque", [p.bloque, p.escena.day], [2, 2]);
+}
+
+{
+  // muchos repasos atrasados: entran menos palabras nuevas, nunca más tiempo
   const e = nuevoEstado();
   for (let i = 0; i < 100; i++) e.tarjetas["x" + i] = { caja: 1, proximo: "2026-10-01" };
-  const p = planificar(e, datosFalsos, HOY);
-  const cabenRepaso = PRESUPUESTO.repaso / COSTE.repaso;
-  comprueba("entran más repasos de los que caben en 6 min", p.repasos.length > cabenRepaso, true);
-  comprueba("y ese día entran muchas menos nuevas", p.nuevas.length < 5, true);
-  comprueba("lo que no cabe pasa a mañana", p.nuevas.length + p.restantes.length, 20);
-  comprueba("la sesión nunca pasa de 25 minutos", p.total <= TOTAL, true);
+  const p = planificar(e, datosFalsos, LUNES);
+  comprueba("el repaso se come las nuevas", p.nuevas.length < 7, true);
+  comprueba("entran más repasos de los que caben", p.repasos.length > 20, true);
+  comprueba("pero la sesión sigue siendo de 10 minutos", p.total, 600);
 }
 
 {
-  // lo que quedó pendiente ayer entra primero hoy
+  // el final: la prueba de escucha y luego mantenimiento
   const e = nuevoEstado();
-  e.pendientesNuevas = ["p1", "p2", "p3"];
-  const p = planificar(e, datosFalsos, HOY);
-  comprueba("primero lo que quedó pendiente", p.nuevas, ["p1", "p2", "p3"]);
-}
+  e.vistas = plan.TOTAL_ITEMS;
+  for (let i = 0; i < 100; i++) e.tarjetas[`b1-${i % 20}`] = { caja: 2, proximo: "2026-10-01" };
+  const p = planificar(e, datosFalsos, LUNES);
+  comprueba("la prueba: nada nuevo y 25 preguntas", [p.nuevas.length, p.escucha.length], [0, 25]);
+  comprueba("cada pregunta, cuatro opciones distintas", [p.escucha[0].opciones.length, new Set(p.escucha[0].opciones).size], [4, 4]);
+  comprueba("la correcta es su significado", p.escucha[0].opciones[p.escucha[0].correcta], p.escucha[0].es);
 
-// --- días 29 y 30: nada nuevo y prueba final de escucha
-{
-  const e = nuevoEstado();
-  e.diaPlan = 29;
-  for (let i = 0; i < 200; i++) e.tarjetas["w" + i] = { caja: 2, proximo: "2026-10-01" };
-  const p = planificar(e, datosFalsos, HOY);
-
-  comprueba("el día 29 no entran palabras nuevas", [p.modo, p.nuevas.length], ["prueba", 0]);
-  comprueba("la prueba de escucha ocupa el hueco de las nuevas", p.escucha.length, PRESUPUESTO_PRUEBA.escucha / COSTE.escucha);
-  comprueba("y el día sigue durando 25 minutos", p.total, TOTAL);
-  comprueba("los repasos atrasados no se comen la prueba", p.repasos.length, PRESUPUESTO_PRUEBA.repaso / COSTE.repaso);
-  comprueba("la escena es una ya vista", p.escena.day <= 28, true);
-
-  const q = p.escucha[0];
-  comprueba("cada pregunta tiene cuatro opciones distintas", [q.opciones.length, new Set(q.opciones).size], [4, 4]);
-  comprueba("la opción correcta es su significado", q.opciones[q.correcta], q.es);
-  comprueba("todas las preguntas suenan y tienen respuesta", p.escucha.every((x) => x.tts && x.correcta >= 0), true);
-  comprueba("mezcla palabras y frases", [...new Set(p.escucha.map((x) => x.tipo))].sort(), ["frase", "palabra"]);
-  comprueba("y las frases vienen de escenas mezcladas", new Set(p.escucha.filter((x) => x.tipo === "frase").map((x) => x.de)).size > 1, true);
-}
-
-{
-  // sin nada aprendido todavía no hay prueba que hacer, y no se rompe nada
-  const e = nuevoEstado();
-  e.diaPlan = 30;
-  const p = planificar(e, datosFalsos, HOY);
-  comprueba("sin palabras aprendidas no hay preguntas de palabras", p.escucha.every((x) => x.tipo === "frase"), true);
-}
-
-// --- desde el día 31: modo mantenimiento
-{
-  const e = nuevoEstado();
-  e.diaPlan = 31;
-  for (let i = 0; i < 200; i++) e.tarjetas["w" + i] = { caja: 3, proximo: "2026-10-01" };
-  const p = planificar(e, datosFalsos, HOY);
-
-  comprueba("mantenimiento: 10 minutos", [p.modo, p.total], ["mantenimiento", 10 * 60]);
-  comprueba("solo dos pasos: la escena y el repaso", PASOS[p.modo].map((x) => x.clave), ["escena", "repaso"]);
-  comprueba("ni palabras nuevas, ni prueba, ni retos", [p.nuevas.length, p.escucha.length, p.retos.length], [0, 0, 0]);
-  comprueba("los repasos llenan sus 7 minutos", p.repasos.length, Math.floor(PRESUPUESTO_MANTENIMIENTO.repaso / COSTE.repaso));
-  comprueba("con una escena al azar ya vista", p.escena.day <= 28, true);
+  e.pruebaHecha = true;
+  const m = planificar(e, datosFalsos, LUNES);
+  comprueba("mantenimiento: 10 minutos y dos pasos", [m.total, PASOS[m.modo].map((x) => x.clave)], [600, ["escena", "repaso"]]);
+  comprueba("ni nuevas ni retos", [m.nuevas.length, m.retos.length], [0, 0]);
 }
 
 console.log(fallos ? `\n${fallos} prueba(s) mal.\n` : "\n✓ Todas las pruebas bien.\n");

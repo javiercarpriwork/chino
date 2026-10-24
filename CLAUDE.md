@@ -10,10 +10,14 @@ Este archivo es el plan completo de la app. Léelo al empezar cada sesión, junt
 
 ## Objetivo
 Conversar en mi día a día en Taipei y enterarme de lo que me dicen.
-- 30 días, 25 minutos al día, siempre en el mismo orden.
-- La base son las 500 palabras y las 50 expresiones de `vocab.json`.
-- Cada día gira alrededor de una situación real de mi vida aquí (ver "Las 28 situaciones").
+- **Del 24 de octubre al 30 de noviembre de 2026**: 38 días.
+- **10 minutos entre semana y 30 minutos dos días** (por defecto sábado y domingo; se cambia en Ajustes). En total, 620 minutos.
+- En ese tiempo entran **340 palabras y moldes**: las 306 más usadas de `vocab.json` más sus 34 moldes, que son los de las 17 primeras escenas. Las 210 restantes quedan para diciembre.
+- No quiero memorizar listas: quiero entender. Por eso **cada palabra vive dentro de una frase de su escena**, el repaso suena como frase y no como palabra suelta, y todos los días hay que decir algo en voz alta.
 - La prioridad es el SONIDO: entender de oído y saber decirlo. Los caracteres van pequeños, solo como apoyo.
+
+### Por qué 340 y no 550
+620 minutos dan para ver cada palabra una vez (unos 30 s: oírla, entenderla, verla en su frase y decirla) y repasarla las veces que hace falta para que se quede (unos 5 repasos de 12 s). Eso son unos 90 s por palabra: 340 palabras llenan el plan entero. Con las 550 saldrían 2 repasos por palabra, que es verlas pasar. Javi eligió 340 bien aprendidas.
 
 ## Qué tipo de app es
 Una app web que se instala en el iPhone desde Safari con "Añadir a pantalla de inicio" (una PWA):
@@ -114,24 +118,34 @@ Saca un informe por días: cuántas palabras nuevas del día aparecen en la esce
 
 Los días 23 a 27 cambiaron de situación al escribir las escenas: las palabras de esos días (餐廳, 生日, 房間, 週末…) pedían otra cosa, y una escena sale mucho mejor cuando la situación encaja con las palabras de ese día.
 
-Días 29 y 30: nada nuevo. Solo repaso y una prueba final de escucha con escenas mezcladas.
+**En el plan hasta el 30 de noviembre entran las 17 primeras** (del 1 al 17: de presentarme a la farmacia). Las 11 restantes van con las palabras de diciembre.
 
 ## El motor de aprendizaje
-- **"Día de estudio", no día de calendario.** Si un día no abro la app no pierdo nada: al volver sigo por donde iba. El contador de días avanza cuando termino las palabras nuevas de ese día.
+- **El contenido va en bloques.** Un bloque = una escena + sus 20 palabras y moldes. Cada bloque dura dos o tres días, así que oigo la misma escena varios días seguidos y cada vez entiendo más. Son 17 bloques.
+- **El tipo de sesión lo manda el día de la semana** (hoy es sábado → 30 minutos), pero **el contenido lo mando yo**: si un día no abro la app no pierdo nada, al volver sigo por la palabra donde lo dejé. En Hoy se ve si voy al día o por detrás del calendario.
 - **Repaso espaciado por cajas:** nueva → 1 día → 3 → 7 → 14 → 30. "Lo sé" sube una caja; "Otra vez" vuelve a la caja de 1 día y la tarjeta reaparece al final de la sesión de hoy.
-- **Presupuesto fijo de 25 minutos.** Cuentas aproximadas: cada repaso 8 s, cada palabra nueva 24 s, cada reto de "dilo tú" 35 s. Si hay muchos repasos atrasados, el repaso se come parte del tiempo de las palabras nuevas y ese día entran menos; lo que falte entra al día siguiente. **La sesión nunca pasa de 25 minutos**, aunque eso haga que el plan dure unos días más de 30. En Progreso se ve si voy adelantado o con retraso.
+- **Presupuesto fijo: 10 o 30 minutos.** Cuentas aproximadas: cada repaso 12 s (va con su frase), cada palabra nueva 30 s, cada reto de "dilo tú" 35 s. Entran 7 palabras nuevas los días cortos y 14 los largos. Si hay muchos repasos atrasados, el repaso se come parte del tiempo de las palabras nuevas y ese día entran menos. **La sesión nunca se alarga.**
 - **Palabras con dos lecturas** (得, 地, 和, 還…): la voz puede leer el carácter suelto con la lectura equivocada, así que en esas se reproduce también la frase de ejemplo.
-- Desde el día 31: modo mantenimiento de 10 minutos, solo repasos y una escena al azar.
+- **Al terminar las 340**: prueba final de escucha (suena algo aprendido y elijo su significado entre cuatro, con escenas mezcladas). Después, mantenimiento de 10 minutos: una escena al azar y repasos.
 
-## La sesión diaria: 25 minutos fijos, siempre en este orden
-Con una barra de progreso arriba y los seis pasos siempre iguales.
+## La sesión diaria
+Con una barra de progreso arriba. Lo calcula `planificar()` en `js/sesion.js`; el calendario está en `js/plan.js`.
 
-1. **Oído (1 min).** Suena una sílaba ya aprendida y elijo su tono entre cuatro botones (ˉ ˊ ˇ ˋ). Insiste en los pares que más se confunden (1º con 4º, 2º con 3º) y en los que yo más fallo.
-2. **La escena (3 min).** Escucho el diálogo completo a velocidad natural **sin texto** y respondo las 3 preguntas. Después puedo verlo con pinyin y traducción, y repetir cada línea.
-3. **Nuevas (8 min).** Las palabras y los moldes del día. Cada uno: audio normal y lento, significado, caracteres pequeños y la frase de la escena donde aparece. Lo repito con "grábate y compárate". Si el reconocimiento de voz está disponible, además me dice qué ha entendido; si no me entiende, puedo seguir igualmente: nunca me bloquees.
-4. **Repaso (6 min).** Primero solo audio, sin texto: pienso el significado, toco y se revela (pinyin grande, significado, caracteres pequeños). Marco "Otra vez" o "Lo sé". Cada 3 repasos, uno va al revés: veo el español y tengo que decirlo yo.
-5. **Dilo tú (5 min).** Los 5 retos del día: leo la frase en español, la digo, me grabo y escucho la respuesta modelo.
-6. **Hazlo de verdad (2 min).** Repito la escena haciendo de uno de los personajes: la app dice su parte y yo respondo la mía.
+### Entre semana: 10 minutos
+1. **La escena (2 min).** La escena del bloque, entera y **sin texto**, y una pregunta de comprensión. El texto está en la pestaña Escenas.
+2. **Nuevas (3,5 min).** 7 palabras. Cada una con audio normal y lento, su significado y la frase de la escena donde vive. Me grabo y me comparo.
+3. **Repaso (4 min).** Unas 20 tarjetas. **Suena la frase, no la palabra suelta**: entiendo o no, toco, y se revela la palabra con su frase. "Otra vez" o "Lo sé". Una de cada tres va al revés: veo el español y la digo yo.
+4. **Dilo tú (40 s).** Un reto: leo la frase en español, la digo, me grabo y oigo el modelo.
+
+### Los dos días largos: 30 minutos
+1. **Oído (2 min).** Suena una sílaba ya aprendida y elijo su tono. Insiste en 1.º–4.º y 2.º–3.º y en lo que más fallo.
+2. **La escena (5 min).** Entera sin texto, las 3 preguntas, y después el texto con pinyin y traducción, línea a línea.
+3. **Nuevas (7 min).** 14 palabras, igual que entre semana.
+4. **Repaso (8 min).** Unas 40 tarjetas, con frase.
+5. **Dilo tú (4 min).** Los 5 retos de la escena, grabándome.
+6. **Hazlo de verdad (4 min).** La escena haciendo de uno de los personajes: la app dice su parte y yo la mía.
+
+Nunca me bloquea: si el reconocimiento de voz no me entiende, sigo igual.
 
 ## Pantallas
 Barra de cinco pestañas abajo, estilo iPhone.

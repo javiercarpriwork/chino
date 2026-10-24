@@ -1,7 +1,7 @@
 // Guarda la app entera la primera vez para que funcione sin internet.
 // Si cambias algo de la app, sube el número de VERSION y se actualiza sola.
 
-const VERSION = "chino-v3";
+const VERSION = "chino-v4";
 
 const ARCHIVOS = [
   "./",
@@ -16,6 +16,7 @@ const ARCHIVOS = [
   "./js/voz.js",
   "./js/repaso.js",
   "./js/sesion.js",
+  "./js/plan.js",
   "./js/pinyin.js",
   "./js/recordatorio.js",
   "./js/grabadora.js",

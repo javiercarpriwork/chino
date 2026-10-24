@@ -10,15 +10,19 @@ export const hoyISO = (d = new Date()) => {
 };
 
 export const estadoInicial = () => ({
-  version: 1,
-  diaPlan: 1,
-  pendientesNuevas: [],
+  version: 2,
+  vistas: 0,            // cuántas palabras y moldes del plan has visto ya
+  diaEstudio: 0,        // cuántas sesiones has hecho
+  pruebaHecha: false,
   tarjetas: {},
   tonos: {},
   diasHechos: [],
   totalSegundos: 0,
   ultimaSesion: null,
-  ajustes: { lenta: 0.55, mostrarHanzi: true, hora: "08:00", voz: "", reconocer: true },
+  ajustes: {
+    lenta: 0.55, mostrarHanzi: true, hora: "08:00", voz: "", reconocer: true,
+    diasLargos: [6, 0],  // sábado y domingo: los días de 30 minutos
+  },
 });
 
 export function cargar() {
@@ -26,10 +30,20 @@ export function cargar() {
     const texto = localStorage.getItem(CLAVE);
     if (!texto) return estadoInicial();
     const guardado = JSON.parse(texto);
-    return { ...estadoInicial(), ...guardado, ajustes: { ...estadoInicial().ajustes, ...(guardado.ajustes || {}) } };
+    return alDia({ ...estadoInicial(), ...guardado, ajustes: { ...estadoInicial().ajustes, ...(guardado.ajustes || {}) } });
   } catch {
     return estadoInicial();
   }
+}
+
+// El plan cambió el 24 de octubre de 2026 (de 30 días de 25 min a 38 días de
+// 10 y 30 min). Las palabras aprendidas se conservan; el calendario se rehace.
+function alDia(estado) {
+  if (estado.version === 2) return estado;
+  const vistas = Object.keys(estado.tarjetas || {}).length;
+  delete estado.diaPlan;
+  delete estado.pendientesNuevas;
+  return { ...estado, version: 2, vistas, diaEstudio: (estado.diasHechos || []).length, pruebaHecha: false };
 }
 
 export function guardar(estado) {

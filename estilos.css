@@ -132,6 +132,10 @@ input[type="search"], input[type="time"], select {
   border: 1px solid var(--linea); background: var(--tarjeta); color: var(--texto);
 }
 input[type="range"] { width: 140px; }
+.dias-largos { display: flex; gap: 6px; }
+.dias-largos button { flex: 1; background: var(--fondo); border: 1px solid var(--linea);
+                      color: var(--texto); padding: 10px 0; border-radius: 10px; font-size: 15px; }
+.dias-largos button.elegido { background: var(--azul); color: #fff; border-color: var(--azul); font-weight: 600; }
 .aviso { border-left: 4px solid var(--naranja); }
 .mal-aviso { border-left: 4px solid var(--rojo); }
 .bien-aviso { border-left: 4px solid var(--verde); }
