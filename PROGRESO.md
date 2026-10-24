@@ -27,7 +27,7 @@ Las cuentas: 620 minutos dan para unos 90 segundos por palabra entre verla la pr
 - **Hoy** dice qué tipo de día es, en qué bloque vas y si vas al día. **Progreso** dice cuántas llevas y cuántos días quedan.
 - **Ajustes**: eliges los dos días de 30 minutos (por defecto sábado y domingo).
 - El progreso guardado del plan viejo se adapta solo (no había ninguno).
-- `tools/test-repaso.mjs`: 56 pruebas (cajas, calendario y los cuatro modos), todas bien.
+- `tools/test-repaso.mjs`: 51 pruebas (cajas, calendario y los cuatro modos), todas bien.
 - `sw.js` en v4.
 
 ## Probado el 24/10/2026
