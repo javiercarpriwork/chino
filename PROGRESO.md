@@ -3,7 +3,7 @@
 Última actualización: 24 de octubre de 2026.
 
 ## Dónde estamos
-**Plan nuevo, empieza hoy (sábado 24 de octubre) y acaba el 30 de noviembre.** La app está hecha y **publicada el 28/10/2026 en https://javiercarpriwork.github.io/chino/** (GitHub Pages, repo `javiercarpriwork/chino`; la copia de trabajo vive en `C:UsersFX507VVepospersonalchino`). Falta que Javi la instale en el iPhone y empiece.
+**Plan nuevo, empieza hoy (sábado 24 de octubre) y acaba el 30 de noviembre.** La app está hecha y **publicada el 28/10/2026 en https://javiercarpriwork.github.io/chino/** (GitHub Pages, repo `javiercarpriwork/chino`; la copia de trabajo vive en `C:\Users\FX507VV\repos\personal\chino`). Falta que Javi la instale en el iPhone y empiece.
 
 | | |
 |---|---|
