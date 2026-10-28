@@ -3,7 +3,7 @@
 Última actualización: 24 de octubre de 2026.
 
 ## Dónde estamos
-**Plan nuevo, empieza hoy (sábado 24 de octubre) y acaba el 30 de noviembre.** La app está hecha; falta que Javi la publique (`PUBLICAR.md`) y que empiece.
+**Plan nuevo, empieza hoy (sábado 24 de octubre) y acaba el 30 de noviembre.** La app está hecha y **publicada el 28/10/2026 en https://javiercarpriwork.github.io/chino/** (GitHub Pages, repo `javiercarpriwork/chino`; la copia de trabajo vive en `C:UsersFX507VVepospersonalchino`). Falta que Javi la instale en el iPhone y empiece.
 
 | | |
 |---|---|
@@ -37,7 +37,7 @@ Las cuentas: 620 minutos dan para unos 90 segundos por palabra entre verla la pr
 - Sin errores en la consola.
 
 ## Lo que tiene que hacer Javi
-1. **Publicarla**: `PUBLICAR.md`, paso a paso (si ya la publicó: `git push` y cerrar y abrir la app en el móvil).
+1. **Instalarla**: abrir https://javiercarpriwork.github.io/chino/ en Safari → Compartir → Añadir a pantalla de inicio (`PUBLICAR.md` §5). Para actualizarla tras un cambio: `git push` y cerrar y abrir la app en el móvil.
 2. **La voz china** en el iPhone: Ajustes › Accesibilidad › Contenido leído › Voces › Chino (Taiwán).
 3. Poner el recordatorio: en la app, Ajustes › Añadir al Calendario.
 4. Hoy (sábado) toca la primera sesión de 30 minutos.
