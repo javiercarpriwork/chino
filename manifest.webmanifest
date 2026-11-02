@@ -1,7 +1,7 @@
 {
-  "name": "Chino · 30 días",
+  "name": "Chino · hasta Navidad",
   "short_name": "Chino",
-  "description": "Entender y hablar chino de Taiwán en 25 minutos al día.",
+  "description": "Entender y hablar chino de Taiwán: 10 minutos al día y 45 el fin de semana.",
   "lang": "es",
   "dir": "ltr",
   "start_url": "./index.html",

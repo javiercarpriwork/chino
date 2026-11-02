@@ -1,7 +1,9 @@
-// El calendario del plan: del 24 de octubre al 30 de noviembre de 2026.
+// El calendario del plan: del 2 de noviembre al 24 de diciembre de 2026 (hasta Navidad).
+// Antes iba del 24-oct al 30-nov con 340 palabras; el 2-11-2026 Javi lo amplió a las 550
+// (las 28 escenas) con el fin de semana de 45 minutos dentro de su sesión de chino de 2 h.
 //
 // Dos tipos de día:
-//   - largo (sábado y domingo, o los dos que elijas): 30 minutos, 14 palabras.
+//   - largo (sábado y domingo, o los dos que elijas): 45 minutos, 21 palabras.
 //   - corto (el resto): 10 minutos, 7 palabras.
 //
 // El contenido va en bloques: cada bloque es una escena y las 20 palabras y
@@ -10,15 +12,17 @@
 //
 // Este archivo no toca el navegador: se puede probar con node.
 
-export const INICIO = "2026-10-24";
-export const FIN = "2026-11-30";
+export const INICIO = "2026-11-02";
+export const FIN = "2026-12-24";
 
-export const BLOQUES = 17;               // las 17 primeras escenas
-export const ITEMS_POR_BLOQUE = 20;      // 18 palabras + 2 moldes
-export const TOTAL_ITEMS = BLOQUES * ITEMS_POR_BLOQUE; // 340
+export const BLOQUES = 28;               // las 28 escenas
+export const ITEMS_POR_BLOQUE = 20;      // 18 palabras + 2 moldes (bloques 1-25)
+// Tamaño real de cada bloque según vocab.json: 20 en los días 1-25; 18, 18 y 14 en los 26-28.
+export const TAMANOS = [...Array(25).fill(20), 18, 18, 14];
+export const TOTAL_ITEMS = TAMANOS.slice(0, BLOQUES).reduce((a, b) => a + b, 0); // 550
 
-export const NUEVAS = { largo: 14, corto: 7 };
-export const MINUTOS = { largo: 30, corto: 10 };
+export const NUEVAS = { largo: 21, corto: 7 };
+export const MINUTOS = { largo: 45, corto: 10 };
 export const DIAS_LARGOS = [6, 0];       // 6 = sábado, 0 = domingo
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -74,7 +78,7 @@ export function idealHasta(iso, diasLargos = DIAS_LARGOS) {
   return Math.min(total, TOTAL_ITEMS);
 }
 
-// Las 340 palabras y moldes del plan, en el orden de siempre (por frecuencia).
+// Las 550 palabras y moldes del plan, en el orden de siempre (por frecuencia).
 export function itemsDelPlan(datos, bloques = BLOQUES) {
   const ids = [];
   for (let b = 1; b <= bloques; b++) ids.push(...datos.nuevasDe(b));
@@ -83,7 +87,12 @@ export function itemsDelPlan(datos, bloques = BLOQUES) {
 
 // En qué bloque (= qué escena) cae la palabra número `indice`.
 export function bloqueDe(indice) {
-  return Math.min(BLOQUES, Math.floor(Math.max(0, indice) / ITEMS_POR_BLOQUE) + 1);
+  let resto = Math.max(0, indice);
+  for (let b = 1; b <= BLOQUES; b++) {
+    if (resto < TAMANOS[b - 1]) return b;
+    resto -= TAMANOS[b - 1];
+  }
+  return BLOQUES;
 }
 
 // Días que faltan para el final del plan (0 si ya pasó).

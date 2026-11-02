@@ -21,7 +21,7 @@ export const estadoInicial = () => ({
   ultimaSesion: null,
   ajustes: {
     lenta: 0.55, mostrarHanzi: true, hora: "08:00", voz: "", reconocer: true,
-    diasLargos: [6, 0],  // sábado y domingo: los días de 30 minutos
+    diasLargos: [6, 0],  // sábado y domingo: los días de 45 minutos
   },
 });
 

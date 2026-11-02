@@ -1,19 +1,37 @@
 # Progreso
 
-Última actualización: 24 de octubre de 2026.
+Última actualización: 2 de noviembre de 2026.
 
 ## Dónde estamos
-**Plan nuevo, empieza hoy (sábado 24 de octubre) y acaba el 30 de noviembre.** La app está hecha y **publicada el 28/10/2026 en https://javiercarpriwork.github.io/chino/** (GitHub Pages, repo `javiercarpriwork/chino`; la copia de trabajo vive en `C:\Users\FX507VV\repos\personal\chino`). Falta que Javi la instale en el iPhone y empiece.
+**Plan hasta Navidad, desde el lunes 2 de noviembre hasta el 24 de diciembre.** Lo pidió Javi el 2-11-2026: usar la app todos los días hasta Navidad y hacer dos sesiones de chino de 2 h el fin de semana. La sesión larga de la app pasa a ser de 45 minutos, y es la primera parte de esas 2 h (el guion está en el cerebro, `habilidades/mandarin/sesiones/`, y se lee en la app Academia).
 
 | | |
 |---|---|
-| Días | 38 (24 oct – 30 nov) |
+| Días | 53 (2 nov – 24 dic) |
 | Entre semana | 10 minutos, 7 palabras nuevas |
-| Sábado y domingo | 30 minutos, 14 palabras nuevas |
-| Total | 620 minutos, 340 palabras y moldes |
-| Escenas | las 17 primeras (de "Presentarme" a "La farmacia") |
-| Para diciembre | 194 palabras y 16 moldes más, con las escenas 18 a 28 |
+| Sábado y domingo | 45 minutos, 21 palabras nuevas |
+| Total | 1.020 minutos, las 550 palabras y moldes |
+| Escenas | las 28 |
 
+## Lo que cambió el 2/11/2026
+- `js/plan.js`: `INICIO` 2026-11-02, `FIN` 2026-12-24, 28 bloques con su tamaño real (`TAMANOS`: 20 en los bloques 1-25; 18, 18 y 14 en los 26-28), `TOTAL_ITEMS` 550, día largo de 45 min y 21 palabras. `bloqueDe` usa los tamaños reales.
+- `js/sesion.js`: presupuesto del día largo, 2.700 s (oído 3 min, escena 7, nuevas 10,5, repaso 14, dilo 5, hazlo de verdad 5,5).
+- Pantallas, recordatorio y manifiesto: «24 de diciembre», «45 minutos».
+- `tools/test-repaso.mjs`: el calendario nuevo (53 días, 14 largos, 1.020 min, 550 palabras, bloques 26-28).
+- `sw.js` en v5.
+- El progreso guardado se conserva: las palabras ya vistas siguen vistas y el plan sigue por donde ibas.
+
+## Punto de control
+- **29 de noviembre**: si «Vas al día» marca más de 60 palabras de retraso o el repaso se come casi todas las nuevas, bajar a unas 450 (quitar los bloques 26-28) y apuntarlo aquí.
+
+## Lo que tiene que hacer Javi
+1. **Instalarla hoy**: abrir https://javiercarpriwork.github.io/chino/ en Safari → Compartir → Añadir a pantalla de inicio (`PUBLICAR.md` §5). Después de cada cambio: cerrar y abrir la app con internet.
+2. **La voz china** en el iPhone: Ajustes › Accesibilidad › Contenido leído › Voces › Chino (Taiwán).
+3. El recordatorio: en la app, Ajustes › Añadir al Calendario.
+
+---
+
+## Historial: el plan del 24/10/2026 (hasta el 30-nov, 340 palabras)
 ## Por qué 340 y no 550 (decidido el 24/10/2026)
 Las cuentas: 620 minutos dan para unos 90 segundos por palabra entre verla la primera vez y repasarla las veces que hace falta para que se quede. Con 550 palabras saldrían 2-3 repasos por palabra: verlas pasar. Javi eligió **350 bien aprendidas** en vez de las 550 a medias. Han quedado 340: las 306 palabras más frecuentes y sus 34 moldes, porque así encajan justas con las 17 primeras escenas (que ya están comprobadas carácter a carácter).
 

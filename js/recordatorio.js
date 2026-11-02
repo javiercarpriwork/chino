@@ -12,7 +12,7 @@ function marcaUTC(d = new Date()) {
 }
 
 // La hora va "flotante" (sin zona): si viajas, suena a esa hora local.
-export function textoIcs(hora = "08:00", minutos = 25) {
+export function textoIcs(hora = "08:00", minutos = 10) {
   const [h, m] = hora.split(":").map(Number);
   const manana = new Date();
   manana.setDate(manana.getDate() + (new Date().getHours() >= h ? 1 : 0));
@@ -33,11 +33,11 @@ export function textoIcs(hora = "08:00", minutos = 25) {
     `DTSTART:${inicio}`,
     `DTEND:${finTexto}`,
     "RRULE:FREQ=DAILY",
-    "SUMMARY:Chino, 25 minutos",
+    "SUMMARY:Chino (10 min; 45 el fin de semana)",
     "DESCRIPTION:La sesión de hoy: oído, la escena, palabras nuevas, repaso, dilo tú y hazlo de verdad.",
     "BEGIN:VALARM",
     "ACTION:DISPLAY",
-    "DESCRIPTION:Chino, 25 minutos",
+    "DESCRIPTION:Chino: la sesión de hoy",
     "TRIGGER:-PT0M",
     "END:VALARM",
     "END:VEVENT",

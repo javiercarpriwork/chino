@@ -98,7 +98,7 @@ function subtituloDeHoy(p) {
   return `${dia.charAt(0).toUpperCase() + dia.slice(1)} · sesión de ${minutos} minutos`;
 }
 
-// ¿Voy al día para llegar al 30 de noviembre?
+// ¿Voy al día para llegar al 24 de diciembre?
 function comoVoy() {
   const hoy = fechaHoy();
   // Lo que deberías llevar ANTES de la sesión de hoy: la de hoy todavía cuenta.
@@ -238,7 +238,7 @@ PANTALLAS.progreso = function () {
     <div class="tarjeta">
       <div class="fila"><span>Palabras vistas</span><b>${estado.vistas} de ${plan.TOTAL_ITEMS}</b></div>
       <div class="fila"><span>Bloque</span><b>${plan.bloqueDe(estado.vistas)} de ${plan.BLOQUES}</b></div>
-      <div class="fila"><span>Para el 30 de noviembre</span><b>${plan.diasHasta(fechaHoy())} días</b></div>
+      <div class="fila"><span>Para el 24 de diciembre</span><b>${plan.diasHasta(fechaHoy())} días</b></div>
       <div class="fila"><span class="mini">${escapar(comoVoy().texto)}</span></div>
       <div class="fila"><span>Días estudiados</span><b>${estado.diasHechos.length}</b></div>
       <div class="fila"><span>Dominadas</span><b>${dom} de ${datos.totalItems}</b></div>
@@ -272,7 +272,7 @@ PANTALLAS.ajustes = function () {
         : '<span class="suave">no disponible aquí</span>'}</div>
       <div class="fila"><span>Hora del recordatorio</span><input type="time" id="hora" value="${estado.ajustes.hora}" style="width:auto"></div>
       <div class="fila" style="display:block">
-        <div>Los dos días de 30 minutos</div>
+        <div>Los dos días de 45 minutos</div>
         <div class="mini" style="margin-bottom:6px">Los demás días son de 10 minutos.</div>
         <div class="dias-largos">
           ${["D", "L", "M", "X", "J", "V", "S"].map((letra, i) => `

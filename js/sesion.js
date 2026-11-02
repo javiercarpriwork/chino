@@ -1,7 +1,7 @@
 // La sesión diaria y sus cuatro modos:
 //   - corto (entre semana): 10 minutos. Escena, 7 palabras nuevas, repaso y un reto.
-//   - largo (los dos días que elijas): 30 minutos. Los seis pasos completos.
-//   - prueba: cuando ya has visto las 340, la prueba final de escucha.
+//   - largo (los dos días que elijas): 45 minutos. Los seis pasos completos.
+//   - prueba: cuando ya has visto las 550, la prueba final de escucha.
 //   - mantenimiento: después de la prueba, 10 minutos de escena y repaso.
 // Si hay muchos repasos atrasados, el repaso se come tiempo de las palabras
 // nuevas y ese día entran menos; lo que falte entra al día siguiente.
@@ -12,7 +12,7 @@ import * as plan from "./plan.js";
 
 export const PRESUPUESTOS = {
   corto:         { escena: 110, nuevas: 210, repaso: 240, dilo: 40 },                        // 600 s = 10 min
-  largo:         { oido: 120, escena: 300, nuevas: 420, repaso: 480, dilo: 240, real: 240 }, // 1800 s = 30 min
+  largo:         { oido: 180, escena: 420, nuevas: 630, repaso: 840, dilo: 300, real: 330 }, // 2700 s = 45 min
   prueba:        { escena: 300, escucha: 600, repaso: 600, dilo: 300 },                      // 1800 s
   mantenimiento: { escena: 180, repaso: 420 },                                               // 600 s
 };

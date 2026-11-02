@@ -10,6 +10,8 @@ Este archivo es el plan completo de la app. Léelo al empezar cada sesión, junt
 
 ## Objetivo
 Conversar en mi día a día en Taipei y enterarme de lo que me dicen.
+
+> **Plan vigente desde el 2-11-2026: hasta Navidad.** Del 2 de noviembre al 24 de diciembre (53 días), con las **550** palabras y moldes y las **28** escenas. Entre semana, 10 minutos y 7 palabras. Sábado y domingo, **45 minutos y 21 palabras**: es la primera parte de la sesión de chino de 2 h del fin de semana, cuyo guion vive en el cerebro (`habilidades/mandarin/`) y se lee en la app Academia. Las cuentas: 39 × 7 + 14 × 21 = 567 ≥ 550. Punto de control el 29-11: si el repaso va atrasado, se baja a unas 450 y se apunta aquí. Lo que sigue debajo es el plan original del 24-oct, que se mantiene salvo en fechas, número de palabras y duración del día largo.
 - **Del 24 de octubre al 30 de noviembre de 2026**: 38 días.
 - **10 minutos entre semana y 30 minutos dos días** (por defecto sábado y domingo; se cambia en Ajustes). En total, 620 minutos.
 - En ese tiempo entran **340 palabras y moldes**: las 306 más usadas de `vocab.json` más sus 34 moldes, que son los de las 17 primeras escenas. Las 210 restantes quedan para diciembre.
