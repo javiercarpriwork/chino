@@ -8,7 +8,6 @@ import * as repaso from "./repaso.js";
 import { planificar, PASOS, silabasParaTonos } from "./sesion.js";
 import * as plan from "./plan.js";
 import { colorear, escapar, tonoDe, esUnaSilaba } from "./pinyin.js";
-import { descargarRecordatorio } from "./recordatorio.js";
 import * as grabadora from "./grabadora.js";
 import * as reconocer from "./reconocer.js";
 
@@ -270,17 +269,14 @@ PANTALLAS.ajustes = function () {
       <div class="fila"><span>Decirme qué ha entendido</span>${reconocer.soportado()
         ? `<button id="reco">${estado.ajustes.reconocer ? "Sí" : "No"}</button>`
         : '<span class="suave">no disponible aquí</span>'}</div>
-      <div class="fila"><span>Hora del recordatorio</span><input type="time" id="hora" value="${estado.ajustes.hora}" style="width:auto"></div>
       <div class="fila" style="display:block">
         <div>Los dos días de 45 minutos</div>
-        <div class="mini" style="margin-bottom:6px">Los demás días son de 10 minutos.</div>
+        <div class="mini" style="margin-bottom:6px">Los demás días son de 10 minutos. A qué hora estudias lo decides en la app Día.</div>
         <div class="dias-largos">
           ${["D", "L", "M", "X", "J", "V", "S"].map((letra, i) => `
             <button data-dia-largo="${i}" class="${estado.ajustes.diasLargos.includes(i) ? "elegido" : ""}">${letra}</button>`).join("")}
         </div>
       </div>
-      <div class="fila"><span>Avisarme todos los días</span><button id="recordatorio">Añadir al Calendario</button></div>
-      <div class="mini" style="padding-bottom:8px">Se descarga un archivo del calendario. En el iPhone, tócalo y dale a "Añadir". Si no se abre, abre la app en Safari y vuelve a tocar el botón.</div>
     </div>
 
     <h2>Copia de seguridad</h2>
@@ -305,8 +301,6 @@ PANTALLAS.ajustes = function () {
   $("#hanzi").onclick = () => { estado.ajustes.mostrarHanzi = !estado.ajustes.mostrarHanzi; almacen.guardar(estado); PANTALLAS.ajustes(); };
   const reco = $("#reco");
   if (reco) reco.onclick = () => { estado.ajustes.reconocer = !estado.ajustes.reconocer; almacen.guardar(estado); PANTALLAS.ajustes(); };
-  $("#hora").onchange = (e) => { estado.ajustes.hora = e.target.value; almacen.guardar(estado); };
-  $("#recordatorio").onclick = () => descargarRecordatorio(estado.ajustes.hora);
   $$("[data-dia-largo]").forEach((b) => (b.onclick = () => {
     const dia = Number(b.dataset.diaLargo);
     const ya = estado.ajustes.diasLargos.includes(dia);

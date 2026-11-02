@@ -21,13 +21,15 @@
 - `sw.js` en v5.
 - El progreso guardado se conserva: las palabras ya vistas siguen vistas y el plan sigue por donde ibas.
 
+## Lo que cambió el 2/11/2026 (tarde)
+- Fuera el recordatorio diario (`js/recordatorio.js` y su botón en Ajustes): las horas viven solo en la app Día del cerebro. `sw.js` en v6.
+
 ## Punto de control
 - **29 de noviembre**: si «Vas al día» marca más de 60 palabras de retraso o el repaso se come casi todas las nuevas, bajar a unas 450 (quitar los bloques 26-28) y apuntarlo aquí.
 
 ## Lo que tiene que hacer Javi
 1. **Instalarla hoy**: abrir https://javiercarpriwork.github.io/chino/ en Safari → Compartir → Añadir a pantalla de inicio (`PUBLICAR.md` §5). Después de cada cambio: cerrar y abrir la app con internet.
 2. **La voz china** en el iPhone: Ajustes › Accesibilidad › Contenido leído › Voces › Chino (Taiwán).
-3. El recordatorio: en la app, Ajustes › Añadir al Calendario.
 
 ---
 

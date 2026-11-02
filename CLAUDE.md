@@ -46,7 +46,6 @@ js/reconocer.js         reconocimiento de voz (extra, opcional) y pinyin
 js/repaso.js            las cajas de repaso 1, 3, 7, 14 y 30 días
 js/sesion.js            los seis pasos y el presupuesto de 25 minutos
 js/pantallas.js         Hoy, Escenas, Palabras, Progreso, Ajustes
-js/recordatorio.js      crea el evento diario para el Calendario
 vocab.json              las 500 palabras y las 50 expresiones (NO se toca)
 scenes.json             las 28 escenas con todo su contenido
 tools/validar.mjs       comprueba que las frases solo usan palabras permitidas
@@ -59,7 +58,7 @@ tools/iconos.mjs        genera los PNG del icono
 - **Pronunciación, método principal: "grábate y compárate".** Con `getUserMedia` y `MediaRecorder`: un botón reproduce el modelo, me grabo, y la app pone mi voz justo después del modelo. La grabación no se guarda: es solo para ese momento.
 - **Reconocimiento de voz (extra, opcional):** `webkitSpeechRecognition` con `lang = "zh-TW"`, si el navegador lo tiene. Me dice qué ha entendido, con su pinyin. En el iPhone puede no existir, fallar con la app instalada o necesitar internet: por eso **todo funciona igual sin él** y nunca bloquea nada.
 - **Pinyin de lo que reconoce:** sin librerías. Diccionario propio construido con `vocab.json` y las palabras de la escena, emparejando de más largo a más corto.
-- **Recordatorio diario:** un botón genera un archivo de calendario (`.ics`) con un evento que se repite todos los días a la hora que yo elija, con su aviso. Lo abro en el iPhone y se añade al Calendario. (Los avisos web en el iPhone son poco fiables; el calendario sí lo es.)
+- **Sin recordatorio ni horas** (desde el 2-11-2026): la app no decide a qué hora se estudia. El horario vive en un solo sitio, la app Día del cerebro (`agenda/`). Antes había un botón que creaba un evento diario en el Calendario; se quitó.
 - **Sin internet:** `sw.js` guarda todos los archivos la primera vez que se abre la app.
 
 ## Datos
@@ -155,7 +154,7 @@ Barra de cinco pestañas abajo, estilo iPhone.
 - **Escenas:** todas las escenas desbloqueadas desde el principio, para volver a escucharlas cuando quiera (audio, pinyin y traducción).
 - **Palabras:** las 500 palabras y las 50 expresiones, con buscador en español o pinyin, botón de audio y su estado (nueva, aprendiendo, dominada).
 - **Progreso:** los días hechos, palabras dominadas sobre 550, tiempo total y si voy adelantado o con retraso.
-- **Ajustes:** hora del recordatorio y botón para crear el evento del Calendario, velocidad de la voz, elegir voz china, mostrar u ocultar caracteres, exportar e importar copia, reiniciar progreso.
+- **Ajustes:** los dos días largos, velocidad de la voz, elegir voz china, mostrar u ocultar caracteres, exportar e importar copia, reiniciar progreso.
 
 ## Diseño
 Que parezca hecha por Apple.
